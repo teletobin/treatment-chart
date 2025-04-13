@@ -1,0 +1,126 @@
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>뷰티 클리닉</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR&display=swap" rel="stylesheet">
+  <script>
+    function updateDateTime() {
+      const days = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'];
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = ('0' + (now.getMonth() + 1)).slice(-2);
+      const date = ('0' + now.getDate()).slice(-2);
+      const day = days[now.getDay()];
+      let hour = now.getHours();
+      const minute = ('0' + now.getMinutes()).slice(-2);
+      const ampm = hour >= 12 ? 'PM' : 'AM';
+      hour = hour % 12 || 12;
+      const timeStr = `${year}/${month}/${date} ${day}, ${ampm} ${('0' + hour).slice(-2)}:${minute}`;
+      document.getElementById('datetime').innerText = timeStr;
+    }
+    setInterval(updateDateTime, 1000);
+    window.onload = updateDateTime;
+  </script>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Noto Sans KR', sans-serif;
+      background-color: #ffffff;
+      color: #303030;
+    }
+    .top-white {
+      background-color: white;
+      padding: 10px 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .top-white img {
+      height: 40px;
+    }
+    header {
+      background-color: #FFAEC9;
+      padding: 5px 20px 10px 20px;
+    }
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .icon-bar {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .icon-bar img {
+      width: 24px;
+      height: 24px;
+      filter: brightness(0) saturate(100%) invert(18%) sepia(6%) saturate(0%) hue-rotate(328deg) brightness(91%) contrast(87%);
+      cursor: pointer;
+    }
+    .menu-row {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+      margin: 6px 0;
+    }
+    .menu-button {
+      background-color: white;
+      color: #303030;
+      padding: 6px 12px;
+      border: none;
+      border-radius: 20px;
+      font-size: 13.4px;
+      cursor: pointer;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .container {
+      padding: 30px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="top-white">
+    <img src="logo.png" alt="logo">
+  </div>
+  <header>
+    <div class="top-bar">
+      <div id="datetime" style="font-size: 13px;"></div>
+      <div class="icon-bar">
+        <img src="icon_heart.png" alt="관심 시술">
+        <img src="icon_bag.png" alt="장바구니">
+        <img src="icon_chart.png" alt="시술내역">
+      </div>
+    </div>
+    <div class="menu-row">
+      <button class="menu-button">99이벤트</button>
+      <button class="menu-button">꽃봄혜택</button>
+      <button class="menu-button">첫시술 이벤트</button>
+      <button class="menu-button">여성제모</button>
+      <button class="menu-button">남성제모</button>
+      <button class="menu-button">보톡스</button>
+      <button class="menu-button">필러</button>
+      <button class="menu-button">다이어트</button>
+    </div>
+    <div class="menu-row">
+      <button class="menu-button">레이저</button>
+      <button class="menu-button">피부트러블</button>
+      <button class="menu-button">리프팅</button>
+      <button class="menu-button">실리프팅</button>
+      <button class="menu-button">부스터시술</button>
+      <button class="menu-button">피부관리</button>
+      <button class="menu-button">수액주사</button>
+      <button class="menu-button">기타</button>
+    </div>
+  </header>
+  <div class="container">
+    <h1>뷰티 클리닉 메인 페이지</h1>
+    <p>상단 메뉴를 통해 원하는 시술을 선택해보세요.</p>
+  </div>
+</body>
+</html>
