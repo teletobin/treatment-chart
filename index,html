@@ -1,186 +1,800 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8" />
-  <title>velyB 클리닉</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR&display=swap" rel="stylesheet" />
-  <style>
-    body {
-      font-family: 'Noto Sans KR', sans-serif;
-      margin: 0;
-      background: #fff;
-      color: #303030;
-      font-size: calc(11px + 0.5vw);
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .container {
-      display: flex;
-      gap: 20px;
-      padding: 20px;
-      flex-grow: 1;
-      height: calc(100% - 40px);
-    }
-
-    .left, .right {
-      flex: 1;
-      border-radius: 16px;
-      padding: 20px;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .left {
-      border: 2px solid #FFAEC9;
-    }
-
-    .right {
-      border: 4px solid #FFAEC9;
-    }
-
-    h2 {
-      font-size: 13px;
-      margin: 0;
-      padding-bottom: 5px;
-      text-align: center;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-
-    th, td {
-      padding: 8px;
-      font-size: 11px;
-    }
-
-    th {
-      text-align: center;
-      font-size: 11px;
-    }
-
-    td:nth-child(3) {
-      text-align: left;
-    }
-
-    td:nth-child(4), td:nth-child(5), td:nth-child(6) {
-      text-align: right;
-    }
-
-    .final-total {
-      text-align: right;
-      font-weight: bold;
-      margin-top: 10px;
-      font-size: 13px;
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="left">
-      <h2>시술 목록</h2>
-      <table id="leftTable">
-        <thead>
-          <tr>
-            <th>시술명</th>
-            <th>가격</th>
-            <th>횟수</th>
-            <th>부가세 포함 합계</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>포텐자 다이아 리프팅 500샷</td>
-            <td>390,000</td>
-            <td><input type="number" class="qty-input" value="1" min="1" /></td>
-            <td>390,000</td>
-          </tr>
-          <tr>
-            <td>프라임레이즈 90KJ - 얼굴전체 체험가</td>
-            <td>490,000</td>
-            <td><input type="number" class="qty-input" value="1" min="1" /></td>
-            <td>490,000</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-    <div class="right">
-      <h2>선택한 항목</h2>
-      <table id="rightTable">
-        <thead>
-          <tr>
-            <th>시술명</th>
-            <th>가격</th>
-            <th>횟수</th>
-            <th>부가세 포함 합계</th>
-          </tr>
-        </thead>
-        <tbody>
-          <!-- 체크된 항목 표시 -->
-        </tbody>
-      </table>
-      <div class="final-total" id="finalTotal">최종 결제 금액: 0원</div>
-    </div>
-  </div>
-
-  <script>
-    // 좌측 횟수 수정 및 합계 업데이트
-    document.querySelectorAll(".qty-input").forEach((input) => {
-      input.addEventListener("input", (event) => {
-        const row = event.target.closest("tr");
-        const price = parseInt(row.cells[1].textContent.replace(/,/g, ""));
-        const quantity = parseInt(event.target.value);
-        row.cells[3].textContent = (price * quantity).toLocaleString();
-      });
-    });
-
-    // 좌측 체크박스 연동하여 우측 표 업데이트
-    document.querySelectorAll(".row-check").forEach((checkbox) => {
-      checkbox.addEventListener("change", (event) => {
-        const row = event.target.closest("tr");
-        const rightTableBody = document.getElementById("rightTable").querySelector("tbody");
-        const finalTotalElement = document.getElementById("finalTotal");
-
-        if (checkbox.checked) {
-          const clonedRow = row.cloneNode(true);
-          clonedRow.querySelector(".qty-input").addEventListener("input", (e) => {
-            const quantity = parseInt(e.target.value);
-            const price = parseInt(clonedRow.cells[1].textContent.replace(/,/g, ""));
-            clonedRow.cells[3].textContent = (price * quantity).toLocaleString();
-
-            updateFinalTotal();
-          });
-          rightTableBody.appendChild(clonedRow);
-        } else {
-          Array.from(rightTableBody.rows).forEach((rightRow) => {
-            if (rightRow.cells[0].textContent === row.cells[0].textContent) {
-              rightTableBody.removeChild(rightRow);
-            }
-          });
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>velyB - 시술 가격 및 자동 차트</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Inter Font (Default Font) -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7f7f7; /* Soft light background */
+        }
+        /* Custom styles for minimal quantity input (like the reference image) */
+        .quantity-control {
+            border: none;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            width: 36px; 
+            height: 28px; 
+            margin-left: auto; /* Right align in its grid column */
+        }
+        .quantity-control input {
+            /* Number display */
+            @apply text-center text-sm font-semibold bg-white p-0 border-0 text-gray-600;
+            width: 16px; /* Narrower width for single digit */
+            height: 100%;
+            line-height: 26px; /* Adjust line height to match new height */
+            -moz-appearance: textfield; /* Firefox: Remove arrows */
+        }
+        /* Hide default number input arrows in modern browsers */
+        input[type='number']::-webkit-inner-spin-button, 
+        input[type='number']::-webkit-outer-spin-button { 
+            -webkit-appearance: none; 
+            margin: 0; 
         }
 
-        updateFinalTotal();
-      });
-    });
+        /* Up/Down Arrow Styling */
+        .up-down-container {
+            /* Adjust width for arrow column */
+            @apply flex flex-col items-center justify-center h-full;
+            width: 12px;
+        }
+        .up-down-container button {
+            /* Button styling */
+            @apply w-full h-1/2 text-[10px] text-gray-500 hover:text-gray-700 bg-gray-50 hover:bg-gray-100 transition duration-150;
+            padding: 0;
+            line-height: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+        }
+        .up-down-container button:first-child { border-bottom: 1px solid #d1d5db; }
+        
+        /* Active Menu Styling */
+        .active-menu {
+            @apply bg-pink-600 text-white shadow-lg;
+        }
 
-    // 최종 결제 금액 업데이트
-    function updateFinalTotal() {
-      const rightTableBody = document.getElementById("rightTable").querySelector("tbody");
-      const finalTotalElement = document.getElementById("finalTotal");
+        /* 1. 시술 목록의 시술명 줄바꿈 허용 (우측 카트 목록) */
+        .cart-item-name {
+            word-break: break-word; /* 긴 단어 중간에도 줄바꿈 허용 */
+            overflow-wrap: break-word; /* 오버플로우 방지 */
+            white-space: normal; /* 줄 바꿈 허용 */
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'clinic-pink': '#FFC0CB', // Soft pink for accents
+                        'clinic-light-pink': '#FCE7F3', // Very light pink for table headers
+                        'clinic-border': '#FBCFE8', // Pink-300 equivalent
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="min-h-screen">
 
-      let total = 0;
-      Array.from(rightTableBody.rows).forEach((rightRow) => {
-        const quantity = parseInt(rightRow.cells[2].querySelector(".qty-input").value);
-        const price = parseInt(rightRow.cells[1].textContent.replace(/,/g, ""));
-        total += price * quantity;
-      });
-      finalTotalElement.textContent = `최종 결제 금액: ${total.toLocaleString()}원`;
-    }
-  </script>
+    <!-- Header & Main Navigation -->
+    <header class="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex justify-between items-center relative">
+            
+            <!-- Logo/Site Name (3. 이미지 로고 대체 및 중앙 배치) -->
+            <div class="absolute inset-x-0 flex justify-center pointer-events-none">
+                <img src="logo.png" onerror="this.onerror=null;this.src='https://placehold.co/300x90/FFFFFF/000000?text=velyB';" alt="velyB Logo" class="h-8 w-auto pointer-events-auto">
+            </div>
+
+            <!-- Left Side (Hidden Search Bar for point 4) -->
+            <div id="search-container" class="flex-1 max-w-sm mr-4" style="visibility: hidden; opacity: 0; transition: all 0.3s;">
+                <input type="text" id="search-input" oninput="handleSearchInput()" 
+                       placeholder="시술명 검색" 
+                       class="w-full p-2 text-sm border border-pink-300 rounded-lg focus:ring-pink-500 focus:border-pink-500 shadow-sm">
+                
+                <!-- Search Results Dropdown -->
+                <div id="search-results-dropdown" class="absolute mt-2 w-80 bg-white border border-gray-200 rounded-lg shadow-xl max-h-60 overflow-y-auto hidden z-20">
+                    <!-- Results will be injected here -->
+                </div>
+            </div>
+
+            <!-- Icons (Right Side) -->
+            <div class="flex space-x-4 text-xl text-gray-500 ml-auto">
+                <!-- 4. 돋보기 메뉴 클릭시 검색창 토글 -->
+                <button id="search-toggle-btn" aria-label="Search" class="hover:text-pink-500 transition" onclick="toggleSearchInput()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-search"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                </button>
+                
+                <!-- Wishlist Toggle Button - Point 4: Wishlist functionality retained -->
+                <button id="wishlist-toggle-btn" aria-label="Wishlist" class="hover:text-pink-500 transition" onclick="toggleWishlistView()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-heart"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+                </button>
+
+            </div>
+        </div>
+    </header>
+
+    <!-- Sub Navigation Menu (Pink Background) -->
+    <nav class="bg-pink-100/70 py-4 shadow-inner">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-wrap gap-2 text-sm font-medium">
+                <!-- Menu Items - Updated to use setCategoryFilter function -->
+                <a href="#" class="menu-tab px-3 py-1.5 rounded-full bg-white text-gray-700 shadow-md hover:bg-pink-50 transition" onclick="setCategoryFilter('limitedEvent', '한정 이벤트 - 윈터 얼리버드 특가전')" id="menu-limitedEvent">한정 이벤트</a>
+                <a href="#" class="menu-tab px-3 py-1.5 rounded-full bg-white text-gray-700 shadow-md hover:bg-pink-50 transition" onclick="setCategoryFilter('skinCare', '피부관리 시술 목록')" id="menu-skinCare">피부관리</a>
+                <a href="#" class="menu-tab px-3 py-1.5 rounded-full bg-white text-gray-700 shadow-md hover:bg-pink-50 transition" onclick="setCategoryFilter('booster', '부스터 시술 목록')" id="menu-booster">부스터</a>
+                <a href="#" class="menu-tab px-3 py-1.5 rounded-full bg-white text-gray-700 shadow-md hover:bg-pink-50 transition" onclick="setCategoryFilter('laser', '레이저 시술 목록')" id="menu-laser">레이저</a>
+                <a href="#" class="menu-tab px-3 py-1.5 rounded-full bg-white text-gray-700 shadow-md hover:bg-pink-50 transition" onclick="setCategoryFilter('lifting', '리프팅 시술 목록')" id="menu-lifting">리프팅</a>
+                <a href="#" class="menu-tab px-3 py-1.5 rounded-full bg-white text-gray-700 shadow-md hover:bg-pink-50 transition" onclick="setCategoryFilter('botox', '보톡스 시술 목록')" id="menu-botox">보톡스</a>
+                <a href="#" class="menu-tab px-3 py-1.5 rounded-full bg-white text-gray-700 shadow-md hover:bg-pink-50 transition" onclick="setCategoryFilter('filler', '필러 시술 목록')" id="menu-filler">필러</a>
+                <a href="#" class="menu-tab px-3 py-1.5 rounded-full bg-white text-gray-700 shadow-md hover:bg-pink-50 transition" onclick="setCategoryFilter('trouble', '트러블 시술 목록')" id="menu-trouble">트러블</a>
+                <a href="#" class="menu-tab px-3 py-1.5 rounded-full bg-white text-gray-700 shadow-md hover:bg-pink-50 transition" onclick="setCategoryFilter('hairRemoval', '제모 시술 목록')" id="menu-hairRemoval">여성제모</a>
+                <a href="#" class="menu-tab px-3 py-1.5 rounded-full bg-white text-gray-700 shadow-md hover:bg-pink-50 transition" onclick="setCategoryFilter('allinone', '올인원 시술 목록')" id="menu-allinone">남성제모</a>
+                <a href="#" class="menu-tab px-3 py-1.5 rounded-full bg-white text-gray-700 shadow-md hover:bg-pink-50 transition" onclick="setCategoryFilter('body', '군살제거 시술 목록')" id="menu-body">체형관리</a>
+                <a href="#" class="menu-tab px-3 py-1.5 rounded-full bg-white text-gray-700 shadow-md hover:bg-pink-50 transition" onclick="setCategoryFilter('allinone', '올인원 시술 목록')" id="menu-allinone">올인원</a>
+                <a href="#" class="menu-tab px-3 py-1.5 rounded-full bg-white text-gray-700 shadow-md hover:bg-pink-50 transition" onclick="setCategoryFilter('allinone', '올인원 시술 목록')" id="menu-allinone">영양면역주사</a>
+            </div>
+        </div>
+    </nav>
+
+
+    <!-- Main Content Area -->
+    <main class="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
+        <div class="grid lg:grid-cols-2 gap-8">
+            
+            <!-- Left Panel: Procedure List (한정 이벤트 / 관심시술) -->
+            <section class="border border-pink-300 rounded-xl shadow-lg bg-white overflow-hidden">
+                <div class="p-5">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4 pb-2 border-b-2 border-pink-500 w-fit" id="procedure-list-title"></h2>
+                    
+                    <div class="w-full">
+                        <!-- Header Row (Minimal height & Alignment) -->
+                        <div class="grid grid-cols-12 text-xs font-semibold text-gray-700 bg-pink-100 py-2 px-3 rounded-t-lg items-center">
+                            <div class="col-span-1"></div> <!-- Heart/Checkbox -->
+                            <div class="col-span-7 text-center">시술명</div> <!-- Center Aligned -->
+                            <div class="col-span-2 text-right">가격</div> <!-- Right Aligned -->
+                            <div class="col-span-1 text-right">횟수</div> <!-- Right Aligned -->
+                            <!-- 2. 합계금액 텍스트 오른쪽 정렬 -->
+                            <div class="col-span-1 text-right">합계</div> 
+                        </div>
+
+                        <!-- Procedure List Body (Dynamic Content) -->
+                        <div id="procedure-list">
+                            <!-- Items will be inserted here by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Right Panel: Cart/Auto Chart (시술목록) -->
+            <aside class="border border-pink-300 rounded-xl shadow-lg bg-white flex flex-col overflow-hidden">
+                <div class="p-5">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4 pb-2 border-b-2 border-pink-500 w-fit">시술목록</h2>
+                    
+                    <!-- Cart Table -->
+                    <div class="w-full">
+                        <!-- Header Row (Minimal height & Alignment) -->
+                        <div class="grid grid-cols-12 text-xs font-semibold text-gray-700 bg-pink-100 py-2 px-3 rounded-t-lg items-center">
+                            <div class="col-span-1 text-center"></div> <!-- Checkbox -->
+                            <div class="col-span-7 text-center">시술명</div> <!-- Center Aligned -->
+                            <div class="col-span-2 text-right">가격</div> <!-- Right Aligned -->
+                            <div class="col-span-1 text-right">횟수</div> <!-- Right Aligned -->
+                            <!-- 2. 합계금액 텍스트 오른쪽 정렬 -->
+                            <div class="col-span-1 text-right">합계</div> 
+                        </div>
+                        
+                        <!-- Cart Items -->
+                        <div id="cart-list" class="min-h-40">
+                            <!-- Selected items will be inserted here by JavaScript -->
+                            <p id="empty-cart-message" class="text-gray-500 text-center py-8">시술 목록이 비어 있습니다.</p>
+                        </div>
+                        
+                        <!-- Final Total Amount (Positioned immediately below the list) -->
+                        <div id="final-total-container" class="mt-4 pt-3 border-t-2 border-pink-400 bg-pink-50/50 p-3 rounded-b-lg hidden">
+                            <div class="flex justify-end text-lg font-bold text-gray-800">
+                                <span>최종결제금액: </span>
+                                <!-- 합계가격 폰트 색상을 text-gray-800으로 통일 -->
+                                <span id="final-total" class="ml-3 text-gray-800">0원</span> 
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </aside>
+        </div>
+    </main>
+
+    <script>
+        // 시술 데이터 정의 (통합된 데이터)
+        const allProceduresData = [
+            // --- 한정 이벤트 (limitedEvent) - 이전 목록 ---
+            { id: 'p1', name: '트리플 윤곽 메이커(사각턱보톡스 + 아큐주사 3cc + 리프팅보톡스) 한정가', price: 55000, category: 'limitedEvent' },
+            { id: 'p2', name: '동안 볼륨 패키지(국산 하트라인 필러 2cc + 주름보톡스 1부위) 한정가', price: 139000, category: 'limitedEvent' },
+            { id: 'p3', name: '시그니처 동안 볼륨 패키지(독일 벨로테로 필러 2cc + 주름보톡스 1부위) 한정가', price: 490000, category: 'limitedEvent' },
+            { id: 'p4', name: '톤업 광채 패키지(레블라이트SI 토닝 + 제네시스 레이저 + 크라이오셀) 한정가', price: 69000, category: 'limitedEvent' },
+            { id: 'p5', name: '눈가주름 지우개(아이 리제반PN 1cc + PDRN 탱탱주사 1cc + 눈가보톡스)', price: 169000, category: 'limitedEvent' },
+            { id: 'p6', name: '시그니처 코어 리프팅(울쎄라피 프라임 200샷 + 블루로즈 포르테 6줄)', price: 1190000, category: 'limitedEvent' },
+            { id: 'p7', name: '써마지 FLX 리프팅 300샷 (고강도 단극성 고주파)', price: 990000, category: 'limitedEvent' },
+            { id: 'p8', name: '슈링크 유니버스 울트라F MP 모드(선 타입) 100샷 체험가', price: 19000, category: 'limitedEvent' },
+            { id: 'p9', name: '울쎄라피 프라임 리프팅 100샷', price: 390000, category: 'limitedEvent' },
+            { id: 'p10', name: '인모드 리프팅 FX 모드 - 1부위 체험가', price: 7900, category: 'limitedEvent' },
+            { id: 'p11', name: '프라임 레이즈 포커스 45KJ (이중턱/턱라인/목주름)', price: 350000, category: 'limitedEvent' },
+            { id: 'p12', name: '리제반PN(PN 프리미엄 스킨부스터) 2cc 체험가', price: 129000, category: 'limitedEvent' },
+            { id: 'p13', name: '쥬베룩 볼륨(PDLLA 콜라겐부스터) 1cc + 1cc 한정가', price: 95000, category: 'limitedEvent' },
+            { id: 'p14', name: '레티젠(리얼 콜라겐 주사) 2cc', price: 500000, category: 'limitedEvent' },
+            { id: 'p15', name: 'NMN(NAD+ 활성화 스킨부스터) 2.5cc + 크라이오셀 체험가', price: 159000, category: 'limitedEvent' },
+            { id: 'p16', name: '얼굴 점빼기(2mm 이하) 개당', price: 900, category: 'limitedEvent' },
+            { id: 'p17', name: '레이저토닝(화이트닝 레이저) 체험가', price: 5000, category: 'limitedEvent' },
+            { id: 'p18', name: '레블라이트SI 토닝(프리미엄 PTP 토닝) 체험가', price: 29000, category: 'limitedEvent' },
+            { id: 'p19', name: '포텐자(RF 니들 프락셔널) + 진정관리 체험가', price: 99000, category: 'limitedEvent' },
+            { id: 'p20', name: 'Stellar M22 IPL + 진정관리', price: 400000, category: 'limitedEvent' },
+            { id: 'p21', name: '아쿠아필(피부 속 노폐물 제거) 1/2/3제 체험가', price: 3500, category: 'limitedEvent' },
+            { id: 'p22', name: '모공쏙쏙 수분촉촉 패키지 한정가 (아쿠아필 외 4종)', price: 25000, category: 'limitedEvent' },
+            { id: 'p23', name: '비타민/수분관리/크라이오셀 체험가', price: 7000, category: 'limitedEvent' },
+            { id: 'p24', name: '주름보톡스(국산 일반형) 체험가', price: 900, category: 'limitedEvent' },
+            { id: 'p25', name: '주름보톡스(국산 일반형) 1부위 + 1부위 한정가', price: 9500, category: 'limitedEvent' },
+            { id: 'p26', name: '사각턱보톡스(국산 일반형) 체험가', price: 9000, category: 'limitedEvent' },
+            { id: 'p27', name: '여자 겨드랑이/인중 제모 체험가', price: 900, category: 'limitedEvent' },
+
+            // --- 피부관리 (skinCare) - 요청하신 신규 목록 ---
+            { id: 's1', name: '아쿠아필 체험가', price: 3500, category: 'skinCare' },
+            { id: 's2', name: '비타민관리/수분관리/크라이오셀 체험가', price: 7000, category: 'skinCare' },
+            { id: 's3', name: '아쿠아필/비타민관리/수분관리/크라이오셀', price: 17000, category: 'skinCare' },
+            { id: 's4', name: '내맘대로 피부관리(아쿠아필/비타민/수분/크라이오셀) 5회', price: 79000, category: 'skinCare' },
+            { id: 's5', name: '내맘대로 피부관리(아쿠아필/비타민/수분/크라이오셀) 10회', price: 150000, category: 'skinCare' },
+            { id: 's6', name: '모공쏙쏙 수분촉촉 한정가', price: 25000, category: 'skinCare' },
+            { id: 's7', name: '모공쏙쏙 수분촉촉', price: 35000, category: 'skinCare' },
+            { id: 's8', name: '블랙필', price: 25000, category: 'skinCare' },
+            { id: 's9', name: '호박필', price: 25000, category: 'skinCare' },
+            { id: 's10', name: '산소필', price: 25000, category: 'skinCare' },
+            { id: 's11', name: '블랙필/호박필/산소필 5회', price: 120000, category: 'skinCare' },
+            { id: 's12', name: '블랙필/호박필/산소필 10회', price: 190000, category: 'skinCare' },
+            { id: 's13', name: '플라필', price: 59000, category: 'skinCare' },
+            { id: 's14', name: '플라필 3회', price: 175000, category: 'skinCare' },
+            { id: 's15', name: '플라필 5회', price: 290000, category: 'skinCare' },
+            { id: 's16', name: '라라필 체험가', price: 45000, category: 'skinCare' },
+            { id: 's17', name: '라라필', price: 59000, category: 'skinCare' },
+            { id: 's18', name: '라라필 3회', price: 175000, category: 'skinCare' },
+            { id: 's19', name: '라라필 5회', price: 275000, category: 'skinCare' },
+            { id: 's20', name: '뉴알라딘필(로즈필) 얼굴전체', price: 99000, category: 'skinCare' },
+            { id: 's21', name: '뉴알라딘필(로즈필) 3회', price: 250000, category: 'skinCare' },
+            { id: 's22', name: '뉴알라딘필(로즈필) 5회', price: 350000, category: 'skinCare' },
+            { id: 's23', name: '바디 뉴알라딘필', price: 125000, category: 'skinCare' },
+            { id: 's24', name: '바디 뉴알라딘필 3회', price: 290000, category: 'skinCare' },
+            { id: 's25', name: '바디 뉴알라딘필 5회', price: 450000, category: 'skinCare' },
+            { id: 's26', name: '엔바이론 이온자임(고농도 비타민 침투) 체험가', price: 69000, category: 'skinCare' },
+            { id: 's27', name: '엔바이론 이온자임(고농도 비타민 침투)', price: 79000, category: 'skinCare' },
+            { id: 's28', name: '엔바이론 이온자임(고농도 비타민 침투) 5회', price: 390000, category: 'skinCare' },
+            { id: 's29', name: '셀바이브 6분', price: 29000, category: 'skinCare' },
+            { id: 's30', name: '셀바이브 6분 5회', price: 139000, category: 'skinCare' },
+            { id: 's31', name: '셀바이브 12분', price: 55000, category: 'skinCare' },
+            { id: 's32', name: '셀바이브 12분 5회', price: 250000, category: 'skinCare' },
+            { id: 's33', name: '셀바이브 24분', price: 105000, category: 'skinCare' },
+            { id: 's34', name: '셀바이브 24분 5회', price: 500000, category: 'skinCare' },
+            { id: 's35', name: '오투덤 산소테라피 체험가', price: 19000, category: 'skinCare' },
+            { id: 's36', name: '오투덤 산소테라피', price: 49000, category: 'skinCare' },
+            { id: 's37', name: '오투덤 산소테라피 5회', price: 239000, category: 'skinCare' },
+            { id: 's38', name: '오투덤 산소테라피 10회', price: 390000, category: 'skinCare' },
+
+            // --- 기타 메뉴 예시 데이터 (편의상 추가) ---
+            { id: 't1', name: '보톡스 - 국산 사각턱', price: 29000, category: 'botox' },
+            { id: 't2', name: '보톡스 - 주름 (1부위)', price: 15000, category: 'botox' },
+            { id: 'l1', name: '울쎄라 300샷', price: 900000, category: 'lifting' },
+            { id: 'l2', name: '슈링크 유니버스 300샷', price: 150000, category: 'lifting' },
+            { id: 'f1', name: '필러 - 국산 1cc', price: 49000, category: 'filler' },
+            { id: 'f2', name: '필러 - 수입 1cc', price: 120000, category: 'filler' },
+            { id: 'b1', name: '스킨부스터 - 리쥬란', price: 150000, category: 'booster' },
+            { id: 'b2', name: '스킨부스터 - 쥬베룩', price: 90000, category: 'booster' },
+            { id: 'z1', name: '군살제거 - 지방분해 주사', price: 30000, category: 'body' },
+            { id: 'z2', name: '군살제거 - 냉각 파괴술', price: 199000, category: 'body' },
+            { id: 'm1', name: '레이저 토닝 10회', price: 299000, category: 'laser' },
+            { id: 'm2', name: '레이저 - IPL 3회', price: 150000, category: 'laser' },
+            { id: 'r1', name: '여드름 압출 및 진정 관리', price: 15000, category: 'trouble' },
+            { id: 'r2', name: '여드름 PDT 1회', price: 120000, category: 'trouble' },
+            { id: 'h1', name: '제모 - 겨드랑이 5회', price: 30000, category: 'hairRemoval' },
+            { id: 'h2', name: '제모 - 인중 5회', price: 25000, category: 'hairRemoval' },
+            { id: 'a1', name: '올인원 - VIP 풀케어 패키지', price: 5000000, category: 'allinone' },
+        ];
+
+
+        // 전역 상태 변수
+        let cart = {}; 
+        let wishlist = {}; 
+        let isWishlistView = false; 
+        let currentCategory = 'limitedEvent'; // 초기 카테고리 설정
+        let currentCategoryName = '한정 이벤트 - 윈터 얼리버드 특가전'; // 초기 이름 설정
+        let isSearchVisible = false;
+
+        // DOM 요소 가져오기
+        const procedureList = document.getElementById('procedure-list');
+        const procedureListTitle = document.getElementById('procedure-list-title');
+        const cartList = document.getElementById('cart-list');
+        const finalTotalDisplay = document.getElementById('final-total');
+        const emptyCartMessage = document.getElementById('empty-cart-message');
+        const wishlistToggleButton = document.getElementById('wishlist-toggle-btn');
+        const finalTotalContainer = document.getElementById('final-total-container');
+        const menuTabs = document.querySelectorAll('.menu-tab');
+        const searchContainer = document.getElementById('search-container');
+        const searchInput = document.getElementById('search-input');
+        const searchResultsDropdown = document.getElementById('search-results-dropdown');
+        
+        // VAT 10% 포함 금액을 계산하는 함수 (횟수 반영)
+        const calculateTotalTaxIncludedPrice = (price, quantity) => Math.floor(price * quantity * 1.1);
+
+        // 숫자 포맷 함수 (3자리마다 쉼표 추가)
+        const formatPrice = (price) => price.toLocaleString('ko-KR');
+
+        /**
+         * 메뉴 클릭 시 실행되는 함수
+         */
+        function setCategoryFilter(category, categoryName) {
+            currentCategory = category;
+            currentCategoryName = categoryName;
+
+            // 1. 메뉴 버튼 활성화 상태 업데이트
+            menuTabs.forEach(tab => tab.classList.remove('active-menu', 'text-white', 'text-pink-600'));
+            const activeTab = document.getElementById(`menu-${category}`);
+            if (activeTab) {
+                activeTab.classList.add('active-menu');
+                activeTab.classList.remove('text-gray-700', 'bg-white');
+            }
+
+            // 2. 위시리스트 보기 모드가 아닐 경우, 타이틀 업데이트
+            if (!isWishlistView) {
+                procedureListTitle.textContent = categoryName;
+            }
+
+            // 3. 목록 다시 렌더링 (필터 적용)
+            renderProcedureList();
+        }
+
+
+        /**
+         * 시술 목록을 화면에 렌더링하고 현재 카트/위시리스트 상태를 반영합니다.
+         */
+        function renderProcedureList() {
+            // 현재 카테고리 필터와 위시리스트 필터를 모두 적용합니다.
+            let filteredProcedures = allProceduresData.filter(proc => {
+                const categoryMatch = proc.category === currentCategory;
+                const wishlistMatch = isWishlistView ? !!wishlist[proc.id] : true;
+                
+                // 위시리스트 뷰일 때는 카테고리 필터를 무시하고 위시리스트 항목만 보여줍니다.
+                if (isWishlistView) {
+                    return wishlistMatch;
+                }
+                // 일반 뷰일 때는 선택된 카테고리 항목만 보여줍니다.
+                return categoryMatch;
+            });
+
+            // 위시리스트 뷰이지만 필터링된 항목이 없는 경우
+            if (isWishlistView && Object.keys(wishlist).length === 0) {
+                 procedureList.innerHTML = `<p class="text-center text-gray-500 py-8 col-span-12">관심 시술 목록이 비어 있습니다.</p>`;
+                 return;
+            }
+            
+            // 일반 뷰이지만 필터링된 항목이 없는 경우
+            if (filteredProcedures.length === 0) {
+                 procedureList.innerHTML = `<p class="text-center text-gray-500 py-8 col-span-12">선택된 카테고리에 시술 항목이 없습니다.</p>`;
+                 return;
+            }
+
+            procedureList.innerHTML = filteredProcedures.map(proc => {
+                // 카트에 항목이 있으면 해당 수량을 사용하고, 없으면 기본값 1을 사용
+                const currentQuantity = cart[proc.id] ? cart[proc.id].quantity : 1;
+                const totalTaxIncludedPrice = calculateTotalTaxIncludedPrice(proc.price, currentQuantity);
+                
+                const isFavorited = !!wishlist[proc.id]; // Check current wishlist state
+                const isChecked = !!cart[proc.id]; // Check current cart state in left panel
+
+                // 하트 아이콘 SVG (채워진 하트 또는 테두리 하트)
+                const heartIconSvg = isFavorited
+                    ? `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="#EC4899" stroke="#EC4899" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-heart"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>`
+                    : `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-heart text-pink-500/70 hover:text-pink-500"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>`;
+
+                // Helper function for visual checkbox rendering
+                const renderVisualCheckbox = (id, checked) => `
+                    <label for="check-${id}" class="cursor-pointer">
+                        <input type="checkbox" id="check-${id}" class="form-checkbox h-4 w-4 text-pink-600 rounded focus:ring-pink-500 cursor-pointer hidden" onchange="handleCartCheckboxChange('${id}')" ${checked ? 'checked' : ''}>
+                        <div class="w-4 h-4 border border-pink-400 rounded transition duration-150 ease-in-out flex items-center justify-center ${checked ? 'bg-pink-500 border-pink-500' : 'bg-white'}">
+                            ${checked ? '<svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 text-white" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 13.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>' : ''}
+                        </div>
+                    </label>
+                `;
+
+                // 시술명 왼쪽 정렬, 가격/횟수/합계 오른쪽 정렬
+                return `
+                    <div class="procedure-item grid grid-cols-12 items-center text-sm text-gray-800 py-3 border-b border-pink-50/50 hover:bg-pink-50 transition" data-id="${proc.id}">
+                        
+                        <!-- Heart & Checkbox Container (col-span-1) -->
+                        <div class="col-span-1 flex justify-center items-center space-x-1">
+                            <!-- Wishlist Heart Toggle -->
+                            <button onclick="toggleWishlist('${proc.id}')" class="wishlist-icon focus:outline-none" id="heart-${proc.id}" aria-label="Add to wishlist">
+                                ${heartIconSvg}
+                            </button>
+                            
+                            <!-- Checkbox: Visual element for checkbox -->
+                            ${renderVisualCheckbox(proc.id, isChecked)}
+                        </div>
+                        
+                        <!-- Procedure Name (col-span-7) - Left Aligned -->
+                        <label for="check-${proc.id}" class="col-span-7 cursor-pointer text-left pl-2 pr-1">${proc.name}</label>
+                        
+                        <!-- Price (col-span-2) - Right Aligned -->
+                        <div class="col-span-2 text-right text-gray-600">${formatPrice(proc.price)}</div>
+                        
+                        <!-- Quantity Control (col-span-1) - Right Aligned -->
+                        <div class="col-span-1 flex justify-end pr-1">
+                            <div class="quantity-control flex-row">
+                                <input type="number" 
+                                    id="quantity-${proc.id}" 
+                                    value="${currentQuantity}" 
+                                    min="1" 
+                                    max="9" 
+                                    readonly="readonly"
+                                >
+                                <div class="up-down-container">
+                                    <button onclick="changeQuantity('${proc.id}', 1)" aria-label="Increase quantity">
+                                        <svg xmlns="http://www.w3.org/2003/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucude-chevron-up"><path d="m18 15-6-6-6 6"/></svg>
+                                    </button>
+                                    <button onclick="changeQuantity('${proc.id}', -1)" aria-label="Decrease quantity">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-down"><path d="m6 9 6 6 6-6"/></svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Total (Tax Included, col-span-1) - 2. 합계금액 오른쪽 정렬 -->
+                        <div class="col-span-1 text-right font-medium text-gray-700 pr-3" id="total-${proc.id}">${formatPrice(totalTaxIncludedPrice)}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        /**
+         * 횟수(수량) 변경 버튼 핸들러
+         */
+        function changeQuantity(procedureId, delta) {
+            const inputElement = document.getElementById(`quantity-${procedureId}`);
+            if (!inputElement) return;
+
+            let currentQuantity = parseInt(inputElement.value, 10);
+            let newQuantity = currentQuantity + delta;
+
+            // 1~9 범위로 제한
+            if (newQuantity < 1) newQuantity = 1;
+            if (newQuantity > 9) newQuantity = 9; 
+
+            // 수량 업데이트 및 전체 목록/카트 갱신
+            updateQuantity(procedureId, newQuantity);
+        }
+
+        /**
+         * 횟수(수량) 변경 핸들러
+         */
+        function updateQuantity(procedureId, newQuantity) {
+            let quantity = parseInt(newQuantity, 10);
+            
+            // 1~9 범위로 제한
+            if (isNaN(quantity) || quantity < 1) {
+                quantity = 1;
+            } else if (quantity > 9) {
+                quantity = 9; 
+            }
+            
+            // Input 요소의 값 업데이트
+            const inputElement = document.getElementById(`quantity-${procedureId}`);
+            if (inputElement) {
+                inputElement.value = quantity;
+            }
+
+            const proc = allProceduresData.find(p => p.id === procedureId);
+            if (!proc) return;
+
+            const newTotalTaxIncluded = calculateTotalTaxIncludedPrice(proc.price, quantity);
+            
+            // 1. 시술 목록의 합계 업데이트
+            const totalDisplayElement = document.getElementById(`total-${proc.id}`);
+            if (totalDisplayElement) {
+                totalDisplayElement.textContent = formatPrice(newTotalTaxIncluded);
+            }
+
+            // 2. 카트에 있다면 카트 상태 업데이트
+            if (cart[procedureId]) {
+                cart[procedureId].quantity = quantity;
+                cart[procedureId].totalTaxIncludedPrice = newTotalTaxIncluded;
+                updateCart(); // 카트 목록 및 최종 금액 갱신
+            }
+        }
+
+        /**
+         * 시술 항목 체크박스 변경 핸들러 (카트 추가/제거 - 좌측 목록)
+         */
+        function handleCartCheckboxChange(procedureId) {
+            const checkbox = document.getElementById(`check-${procedureId}`);
+            const isChecked = checkbox.checked;
+            const proc = allProceduresData.find(p => p.id === procedureId);
+
+            if (!proc) {
+                console.error('Procedure not found:', procedureId);
+                return;
+            }
+            
+            // 현재 수량 필드에서 수량 가져오기 (기본값 1)
+            const quantityInput = document.getElementById(`quantity-${procedureId}`);
+            const currentQuantity = quantityInput ? parseInt(quantityInput.value, 10) : 1;
+
+            if (isChecked) {
+                // 카트에 추가 (현재 수량 반영)
+                cart[procedureId] = {
+                    id: proc.id, 
+                    name: proc.name,
+                    price: proc.price,
+                    quantity: currentQuantity,
+                    totalTaxIncludedPrice: calculateTotalTaxIncludedPrice(proc.price, currentQuantity),
+                    checked: true 
+                };
+            } else {
+                // 카트에서 제거
+                delete cart[procedureId];
+            }
+
+            // Checkbox의 시각적 상태 업데이트 (좌측)
+            const visualCheckbox = checkbox.nextElementSibling; 
+            
+            if (visualCheckbox) {
+                if (isChecked) {
+                    visualCheckbox.classList.add('bg-pink-500', 'border-pink-500');
+                    visualCheckbox.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 text-white" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 13.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>';
+                } else {
+                    visualCheckbox.classList.remove('bg-pink-500', 'border-pink-500');
+                    visualCheckbox.innerHTML = '';
+                }
+            }
+
+
+            updateCart();
+        }
+
+        /**
+         * 우측 시술 목록 체크박스 변경 핸들러 (최종 결제 금액 포함/제외)
+         */
+        function handleCartItemCheckChange(procedureId) {
+            const checkbox = document.getElementById(`cart-check-${procedureId}`);
+            const isChecked = checkbox.checked;
+
+            if (cart[procedureId]) {
+                cart[procedureId].checked = isChecked; // 카트 데이터의 checked 상태 업데이트
+            }
+            
+            // 시각적 상태 업데이트
+            const visualCheckbox = checkbox.nextElementSibling;
+
+            if (visualCheckbox) {
+                if (isChecked) {
+                    visualCheckbox.classList.add('bg-pink-500', 'border-pink-500');
+                    visualCheckbox.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 text-white" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 13.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>';
+                } else {
+                    visualCheckbox.classList.remove('bg-pink-500', 'border-pink-500');
+                    visualCheckbox.innerHTML = '';
+                }
+            }
+
+
+            updateCart(); // 최종 금액 재계산
+        }
+
+        /**
+         * 카트 목록과 최종 금액을 업데이트합니다.
+         */
+        function updateCart() {
+            let totalAmount = 0;
+            const selectedItems = Object.values(cart);
+
+            // 1. 카트 목록 업데이트
+            if (selectedItems.length === 0) {
+                cartList.innerHTML = '';
+                emptyCartMessage.classList.remove('hidden');
+                finalTotalContainer.classList.add('hidden'); // 카트가 비면 최종 금액 숨기기
+            } else {
+                emptyCartMessage.classList.add('hidden');
+                finalTotalContainer.classList.remove('hidden'); // 카트가 있으면 최종 금액 표시
+
+                cartList.innerHTML = selectedItems.map(item => {
+                    // 카트 항목이 'checked: true' 일 때만 합산
+                    if (item.checked) {
+                        totalAmount += item.totalTaxIncludedPrice;
+                    }
+
+                    // Helper function for visual checkbox rendering (for right panel)
+                    const renderVisualCartCheckbox = (id, checked) => `
+                        <label for="cart-check-${id}" class="cursor-pointer flex justify-center items-center h-full">
+                            <input type="checkbox" id="cart-check-${id}" class="form-checkbox h-4 w-4 text-pink-600 rounded focus:ring-pink-500 cursor-pointer hidden" onchange="handleCartItemCheckChange('${id}')" ${checked ? 'checked' : ''}>
+                            <div class="w-4 h-4 border border-pink-400 rounded transition duration-150 ease-in-out flex items-center justify-center ${checked ? 'bg-pink-500 border-pink-500' : 'bg-white'}">
+                                ${checked ? '<svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 text-white" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 13.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>' : ''}
+                            </div>
+                        </label>
+                    `;
+
+
+                    // Right panel rendering updated with text-left/text-right alignment
+                    return `
+                        <div class="grid grid-cols-12 items-center text-sm text-gray-800 py-3 border-b border-gray-100">
+                            <!-- Checkbox (col-span-1) -->
+                            <div class="col-span-1">
+                                ${renderVisualCartCheckbox(item.id, item.checked)}
+                            </div>
+                            <!-- Name (col-span-7) - Left Aligned, 1. 시술명 줄바꿈 허용 -->
+                            <div class="col-span-7 text-left pl-2 pr-1 cart-item-name ${item.checked ? '' : 'text-gray-400 italic line-through'}">${item.name}</div>
+                            <!-- Price (col-span-2) - Right Aligned -->
+                            <div class="col-span-2 text-right text-gray-600 ${item.checked ? '' : 'text-gray-400 italic'}">${formatPrice(item.price)}</div>
+                            <!-- Quantity (col-span-1) - Right Aligned -->
+                            <div class="col-span-1 text-right ${item.checked ? '' : 'text-gray-400 italic'}">${item.quantity}</div>
+                            <!-- Total (col-span-1) - Right Aligned, 2. 합계금액 오른쪽 정렬 -->
+                            <div class="col-span-1 text-right font-semibold text-gray-700 pr-3 ${item.checked ? '' : 'text-gray-400 italic'}">${formatPrice(item.totalTaxIncludedPrice)}</div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            // 2. 최종 금액 업데이트
+            finalTotalDisplay.textContent = formatPrice(totalAmount) + '원';
+        }
+
+        /**
+         * 하트 아이콘 토글: 시술 항목을 위시리스트에 추가/제거하고 아이콘을 변경합니다.
+         */
+        function toggleWishlist(procedureId) {
+            const heartIconElement = document.getElementById(`heart-${procedureId}`);
+            const isFavorited = !!wishlist[procedureId];
+
+            if (isFavorited) {
+                delete wishlist[procedureId];
+            } else {
+                wishlist[procedureId] = true;
+            }
+
+            // 아이콘 상태는 renderProcedureList에서 일괄 갱신됩니다.
+            renderProcedureList();
+        }
+
+        /**
+         * 위시리스트 버튼 토글: 시술 목록을 전체 보기와 위시리스트 보기로 전환합니다.
+         */
+        function toggleWishlistView() {
+            isWishlistView = !isWishlistView;
+            
+            // 1. 헤더 아이콘 스타일 변경
+            if (isWishlistView) {
+                // Set the header heart icon to be filled pink when viewing wishlist
+                wishlistToggleButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#EC4899" stroke="#EC4899" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-heart"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>`;
+                wishlistToggleButton.classList.add('text-pink-600');
+                
+                // Point 4: 타이틀 변경
+                procedureListTitle.textContent = '관심시술';
+                
+                // 메뉴탭 비활성화 (위시리스트 뷰에서는 카테고리 필터 무시)
+                menuTabs.forEach(tab => tab.classList.remove('active-menu', 'text-white'));
+
+            } else {
+                // Set the header heart icon back to outline when viewing all
+                wishlistToggleButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-heart"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>`;
+                wishlistToggleButton.classList.remove('text-pink-600');
+                
+                // Point 4: 타이틀 복구
+                procedureListTitle.textContent = currentCategoryName;
+                
+                // 현재 카테고리 메뉴탭 활성화
+                const activeTab = document.getElementById(`menu-${currentCategory}`);
+                if (activeTab) {
+                    activeTab.classList.add('active-menu');
+                }
+            }
+
+            // 2. 시술 목록 필터링 및 렌더링
+            renderProcedureList();
+        }
+        
+        // --- 4. 검색 기능 추가 ---
+
+        /**
+         * 검색 입력란 표시/숨기기 토글
+         */
+        function toggleSearchInput() {
+            isSearchVisible = !isSearchVisible;
+
+            if (isSearchVisible) {
+                // Show search bar
+                searchContainer.style.visibility = 'visible';
+                searchContainer.style.opacity = 1;
+                searchInput.focus();
+            } else {
+                // Hide search bar
+                searchContainer.style.visibility = 'hidden';
+                searchContainer.style.opacity = 0;
+                searchInput.value = ''; // Clear input
+                searchResultsDropdown.classList.add('hidden'); // Hide results
+            }
+        }
+
+        /**
+         * 검색어 입력 시 드롭다운 결과 업데이트
+         */
+        function handleSearchInput() {
+            const query = searchInput.value.toLowerCase().trim();
+            
+            if (query.length < 2) {
+                searchResultsDropdown.classList.add('hidden');
+                return;
+            }
+
+            const searchResults = allProceduresData.filter(proc => 
+                proc.name.toLowerCase().includes(query)
+            );
+
+            renderSearchResults(searchResults);
+        }
+
+        /**
+         * 검색 결과를 드롭다운에 렌더링
+         */
+        function renderSearchResults(results) {
+            if (results.length === 0) {
+                searchResultsDropdown.innerHTML = `
+                    <div class="p-3 text-sm text-gray-500">검색 결과가 없습니다.</div>
+                `;
+                searchResultsDropdown.classList.remove('hidden');
+                return;
+            }
+
+            searchResultsDropdown.innerHTML = results.map(proc => {
+                const totalTaxIncluded = calculateTotalTaxIncludedPrice(proc.price, 1);
+                
+                // 클릭 시 해당 시술의 카테고리로 이동하고 카트에 추가
+                return `
+                    <div class="flex justify-between items-center p-3 text-xs border-b border-gray-100 cursor-pointer hover:bg-pink-50 transition" 
+                         onclick="selectSearchResult('${proc.category}', '${proc.name}')">
+                        
+                        <!-- 시술명 -->
+                        <span class="font-medium text-gray-800 flex-1 truncate pr-2">${proc.name}</span>
+                        
+                        <!-- 가격 -->
+                        <span class="text-right text-pink-600">${formatPrice(proc.price)}원</span>
+                    </div>
+                `;
+            }).join('');
+            
+            searchResultsDropdown.classList.remove('hidden');
+        }
+
+        /**
+         * 검색 결과 클릭 시 해당 카테고리로 이동하는 함수 (현재는 카테고리 이동만)
+         */
+        function selectSearchResult(category, name) {
+            // 1. 드롭다운 닫기 및 검색 필드 초기화
+            toggleSearchInput(); 
+            
+            // 2. 해당 카테고리로 필터 변경 및 렌더링
+            const categoryName = document.getElementById(`menu-${category}`).textContent;
+            setCategoryFilter(category, categoryName + ' 시술 목록'); // Use stored name or default
+
+            // 선택된 항목 강조 등의 추가 작업은 필요 시 구현
+            console.log(`Selected procedure: ${name} in category: ${category}`);
+        }
+
+        // 초기화
+        window.onload = () => {
+            // 초기 카테고리 (한정 이벤트) 설정 및 렌더링
+            setCategoryFilter(currentCategory, currentCategoryName);
+            updateCart(); // 초기 화면에서 카트 비어 있음 표시
+        };
+
+    </script>
 </body>
 </html>
