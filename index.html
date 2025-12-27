@@ -1001,10 +1001,35 @@ function handleCartItemCheckChange(procedureId) {
     updateCart();
 }
 
+// 카테고리 우선순위 정해주는 함수
+function getCategoryPriority(catRaw) {
+  const cat = String(catRaw || "").toLowerCase();
+
+  if (cat === "skincare") return 1;                    // 피부관리
+  if (cat === "event" || cat === "prime") return 2;   // 이벤트시술
+  if (cat === "lifting") return 3;                    // 리프팅
+  if (cat === "allinone") return 4;                   // 올인원테라피
+  if (cat === "laser") return 5;                      // 레이저
+  if (cat === "body") return 6;                       // 체형관리
+  if (["booster","botox","filler","injection"].includes(cat)) return 7; // 주사류
+  if (cat === "femalehair" || cat === "malehair") return 8; // 제모
+
+  return 99; // 그 외는 맨 뒤
+}
+
+// 이 순서대로 정렬하는 함수
+function sortForChart(a, b) {
+  const pa = getCategoryPriority(a?.category);
+  const pb = getCategoryPriority(b?.category);
+
+  if (pa !== pb) return pa - pb;
+
+  return String(a.id).localeCompare(String(b.id));
+}
 
 function updateCart() {
     let totalAmount = 0;
-    const selectedItems = Object.values(cart).sort((a, b) => a.id.localeCompare(b.id));
+    const selectedItems = Object.values(cart).sort(sortForChart);
 
     if (selectedItems.length === 0) {
         cartList.innerHTML = '';
@@ -1484,7 +1509,7 @@ function exportChartOnly() {
     // cart 전역이 이미 있음 (너 코드에 있음)
     const items = Object.values(cart || {})
       .filter(it => it && it.checked)                 // ✅ 체크된 항목만
-      .sort((a, b) => String(a.id).localeCompare(String(b.id)));
+      .sort(sortForChart);
 
     if (items.length === 0) {
       alert('선택된 시술이 없습니다.');
