@@ -931,6 +931,7 @@ window.setCategoryFilter = setCategoryFilter;
         id: proc.id,
         name: proc.name,
         price: proc.price,
+        category: proc.category,
         quantity: currentQuantity || 1,
         totalTaxIncludedPrice: calculateTotalTaxIncludedPrice(proc.price, currentQuantity || 1),
         checked: true
@@ -955,6 +956,7 @@ function handleCartCheckboxChange(procedureId) {
             id: proc.id,
             name: proc.name,
             price: proc.price,
+            category: proc.category,
             quantity: currentQuantity,
             totalTaxIncludedPrice: calculateTotalTaxIncludedPrice(proc.price, currentQuantity),
             checked: true
@@ -1000,32 +1002,59 @@ function handleCartItemCheckChange(procedureId) {
 
     updateCart();
 }
+// === 시술 카테고리 우선순위 정렬 함수 시작 ===
 
-// 카테고리 우선순위 정해주는 함수
-function getCategoryPriority(catRaw) {
-  const cat = String(catRaw || "").toLowerCase();
+// 카테고리별 우선순위
+// 1. 피부관리 > 2. 이벤트시술 > 3. 리프팅 > 4. 올인원테라피
+// 5. 레이저 > 6. 체형관리 > 7. 주사류(부스터/보톡스/필러/면역주사) > 8. 제모 > 그 외
+function getCategoryPriority(rawCategory) {
+  const cat = String(rawCategory || '').trim().toLowerCase();
 
-  if (cat === "skincare") return 1;                    // 피부관리
-  if (cat === "event" || cat === "prime") return 2;   // 이벤트시술
-  if (cat === "lifting") return 3;                    // 리프팅
-  if (cat === "allinone") return 4;                   // 올인원테라피
-  if (cat === "laser") return 5;                      // 레이저
-  if (cat === "body") return 6;                       // 체형관리
-  if (["booster","botox","filler","injection"].includes(cat)) return 7; // 주사류
-  if (cat === "femalehair" || cat === "malehair") return 8; // 제모
+  // 1순위: 피부관리
+  if (cat === 'skincare') return 1;
 
-  return 99; // 그 외는 맨 뒤
+  // 2순위: 이벤트시술 (이벤트, 프라임 등)
+  if (cat === 'event' || cat === 'prime') return 2;
+
+  // 3순위: 리프팅
+  if (cat === 'lifting') return 3;
+
+  // 4순위: 올인원테라피
+  if (cat === 'allinone') return 4;
+
+  // 5순위: 레이저
+  if (cat === 'laser') return 5;
+
+  // 6순위: 체형관리
+  if (cat === 'body') return 6;
+
+  // 7순위: 주사시술 (부스터, 보톡스, 필러, 면역주사)
+  if (['booster', 'botox', 'filler', 'injection'].includes(cat)) return 7;
+
+  // 8순위: 제모 (여성제모 / 남성제모)
+  if (cat === 'femalehair' || cat === 'malehair') return 8;
+
+  // 그 외 (트러블 등)
+  return 99;
 }
 
-// 이 순서대로 정렬하는 함수
+// 실제 정렬에 쓰는 함수
 function sortForChart(a, b) {
-  const pa = getCategoryPriority(a?.category);
-  const pb = getCategoryPriority(b?.category);
+  const pa = getCategoryPriority(a && a.category);
+  const pb = getCategoryPriority(b && b.category);
 
-  if (pa !== pb) return pa - pb;
+  // 카테고리 우선순위가 다르면 그 순서대로
+  if (pa !== pb) {
+    return pa - pb;
+  }
 
-  return String(a.id).localeCompare(String(b.id));
+  // 같은 카테고리면 기존처럼 id 순
+  return String(a.id || '').localeCompare(String(b.id || ''));
 }
+
+// === 시술 카테고리 우선순위 정렬 함수 끝 ===
+
+
 
 function updateCart() {
     let totalAmount = 0;
