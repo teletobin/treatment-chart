@@ -1624,7 +1624,8 @@ function exportChartWithBalance() {
   try {
     const items = Object.values(cart || {})
       .filter(it => it && it.checked)
-      .sort((a, b) => String(a.id).localeCompare(String(b.id)));
+      .sort(sortForChart);
+
 
     if (items.length === 0) {
       alert('선택된 시술이 없습니다.');
@@ -1761,7 +1762,7 @@ function generateChartFromMembershipPopup() {
     // ===== 아래는 차트+잔액과 동일 로직 =====
     const items = Object.values(cart || {})
       .filter(it => it && it.checked)
-      .sort((a, b) => String(a.id).localeCompare(String(b.id)));
+      .sort(sortForChart);
 
     if (items.length === 0) {
       alert('선택된 시술이 없습니다.');
