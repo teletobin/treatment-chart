@@ -1,186 +1,1963 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" class ="h-full">
 <head>
-  <meta charset="UTF-8" />
-  <title>velyB 클리닉</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR&display=swap" rel="stylesheet" />
-  <style>
-    body {
-      font-family: 'Noto Sans KR', sans-serif;
-      margin: 0;
-      background: #fff;
-      color: #303030;
-      font-size: calc(11px + 0.5vw);
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>velyB - 시술 가격 및 자동 차트</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Inter Font (Default Font) -->
+    <style>
+        @import url('https://cdn.jsdelivr.net/npm/pretendard@latest/dist/web/static/pretendard.css');
+        body {
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
 
-    .container {
-      display: flex;
-      gap: 20px;
-      padding: 20px;
-      flex-grow: 1;
-      height: calc(100% - 40px);
-    }
-
-    .left, .right {
-      flex: 1;
-      border-radius: 16px;
-      padding: 20px;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .left {
-      border: 2px solid #FFAEC9;
-    }
-
-    .right {
-      border: 4px solid #FFAEC9;
-    }
-
-    h2 {
-      font-size: 13px;
-      margin: 0;
-      padding-bottom: 5px;
-      text-align: center;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-
-    th, td {
-      padding: 8px;
-      font-size: 11px;
-    }
-
-    th {
-      text-align: center;
-      font-size: 11px;
-    }
-
-    td:nth-child(3) {
-      text-align: left;
-    }
-
-    td:nth-child(4), td:nth-child(5), td:nth-child(6) {
-      text-align: right;
-    }
-
-    .final-total {
-      text-align: right;
-      font-weight: bold;
-      margin-top: 10px;
-      font-size: 13px;
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="left">
-      <h2>시술 목록</h2>
-      <table id="leftTable">
-        <thead>
-          <tr>
-            <th>시술명</th>
-            <th>가격</th>
-            <th>횟수</th>
-            <th>부가세 포함 합계</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>포텐자 다이아 리프팅 500샷</td>
-            <td>390,000</td>
-            <td><input type="number" class="qty-input" value="1" min="1" /></td>
-            <td>390,000</td>
-          </tr>
-          <tr>
-            <td>프라임레이즈 90KJ - 얼굴전체 체험가</td>
-            <td>490,000</td>
-            <td><input type="number" class="qty-input" value="1" min="1" /></td>
-            <td>490,000</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-    <div class="right">
-      <h2>선택한 항목</h2>
-      <table id="rightTable">
-        <thead>
-          <tr>
-            <th>시술명</th>
-            <th>가격</th>
-            <th>횟수</th>
-            <th>부가세 포함 합계</th>
-          </tr>
-        </thead>
-        <tbody>
-          <!-- 체크된 항목 표시 -->
-        </tbody>
-      </table>
-      <div class="final-total" id="finalTotal">최종 결제 금액: 0원</div>
-    </div>
-  </div>
-
-  <script>
-    // 좌측 횟수 수정 및 합계 업데이트
-    document.querySelectorAll(".qty-input").forEach((input) => {
-      input.addEventListener("input", (event) => {
-        const row = event.target.closest("tr");
-        const price = parseInt(row.cells[1].textContent.replace(/,/g, ""));
-        const quantity = parseInt(event.target.value);
-        row.cells[3].textContent = (price * quantity).toLocaleString();
-      });
-    });
-
-    // 좌측 체크박스 연동하여 우측 표 업데이트
-    document.querySelectorAll(".row-check").forEach((checkbox) => {
-      checkbox.addEventListener("change", (event) => {
-        const row = event.target.closest("tr");
-        const rightTableBody = document.getElementById("rightTable").querySelector("tbody");
-        const finalTotalElement = document.getElementById("finalTotal");
-
-        if (checkbox.checked) {
-          const clonedRow = row.cloneNode(true);
-          clonedRow.querySelector(".qty-input").addEventListener("input", (e) => {
-            const quantity = parseInt(e.target.value);
-            const price = parseInt(clonedRow.cells[1].textContent.replace(/,/g, ""));
-            clonedRow.cells[3].textContent = (price * quantity).toLocaleString();
-
-            updateFinalTotal();
-          });
-          rightTableBody.appendChild(clonedRow);
-        } else {
-          Array.from(rightTableBody.rows).forEach((rightRow) => {
-            if (rightRow.cells[0].textContent === row.cells[0].textContent) {
-              rightTableBody.removeChild(rightRow);
-            }
-          });
+            background-color: #f7f7f7; /* Soft light background */
+        }
+        /* Custom styles for minimal quantity input (like the reference image) */
+        .quantity-control {
+            border: none;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            width: 36px; 
+            height: 28px; 
+            margin-left: auto; /* Right align in its grid column */
+        }
+        .quantity-control input {
+            /* Number display */
+            width: 10px;
+height: 100%;
+line-height: 15px;
+-moz-appearance: textfield;
+            width: 10px; /* Narrower width for single digit */
+            height: 100%;
+            line-height: 15px; /* Adjust line height to match new height */
+            -moz-appearance: textfield; /* Firefox: Remove arrows */
+        }
+        /* Hide default number input arrows in modern browsers */
+        input[type='number']::-webkit-inner-spin-button, 
+        input[type='number']::-webkit-outer-spin-button { 
+            -webkit-appearance: none; 
+            margin: 0; 
         }
 
-        updateFinalTotal();
+/* Quantity Input */
+.quantity-control input {
+  text-align: center;
+  font-size: 10px;
+  font-weight: 600;
+  background: #ffffff;
+  padding: 0;
+  border: 0;
+  color: #4b5563;
+
+  width: 10px;
+  height: 100%;
+  line-height: 15px;
+  -moz-appearance: textfield;
+}
+
+/* Hide default number input arrows */
+input[type='number']::-webkit-inner-spin-button,
+input[type='number']::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Up / Down Arrow */
+.up-down-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  width: 12px;
+}
+
+.up-down-container button {
+  width: 100%;
+   height: 12px; 
+    font-size: 8px;
+  color: #6b7280;
+  background: transparent;
+  border: none;
+  padding: 0;
+  line-height: 1;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 150ms;
+}
+
+.up-down-container button:hover {
+  color: #374151;
+}
+
+.up-down-container button:first-child {
+  border-bottom: 1px solid #d1d5db;
+}
+
+/* Active Menu */
+.active-menu {
+  background: #F68F9D;
+  color: #ffffff;
+  box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1),
+              0 4px 6px -4px rgba(0,0,0,0.1);
+}
+
+
+
+
+        /* ===== Scrollbar Styling ===== */
+
+/* Chrome, Edge, Safari */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #F7E4E8;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #F7E4E8;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: #F7E4E8;
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #F7E4E8 #F7E4E8;
+}
+/* ✅ 좌/우 박스 전체 글씨 크기 통일 */
+#left-panel,
+#right-panel {
+  font-size: 12px;
+  line-height: 1.35;
+}
+ 
+@media (min-width: 768px) {
+  #left-panel,
+  #right-panel {
+    font-size: 15px;
+  }
+}
+
+/* ✅ Tailwind text-* 클래스 무력화 */
+#left-panel .text-xs, #left-panel .text-sm, #left-panel .text-base,
+#right-panel .text-xs, #right-panel .text-sm, #right-panel .text-base {
+  font-size: inherit !important;
+  line-height: inherit !important;
+}
+/* ✅ CLEAR 버튼만 강제 xs */
+#right-panel .clear-btn{
+  font-size: 11px !important;
+  line-height: 1.1 !important;
+}
+/* 최종금액 / 회원권 / 차감후잔액만 크게 */
+.final-emphasis{
+  font-size: 15px;
+  line-height: 1.35;
+}
+
+@media (min-width: 768px){
+  .final-emphasis{
+    font-size: 18px;
+  }
+}
+.search-hit { outline: 2px solid #F68F9D; outline-offset: 2px; border-radius: 8px; }
+
+.site-footer {
+  font-size: 9px;     /* 아주 작게 */
+  color: #9ca3af;      /* 연한 회색 */
+  text-align: center;
+  margin: 10px 0;
+}
+.menubar-bg{
+  position: relative;
+  background: url("menubar.png") center/cover no-repeat;
+  overflow: hidden;          /* 영역 밖으로 새지 않게 */
+}
+
+.menubar-tint::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  background: rgba(255,255,255,0.6); /* 연함 조절 */
+  pointer-events:none;
+}
+
+.menubar-tint > *{
+  position: relative;
+}
+
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'clinic-pink': '#FFC0CB', // Soft pink for accents
+                        'clinic-light-pink': '#FCE7F3', // Very light pink for table headers
+                        'clinic-border': '#FBCFE8', // Pink-300 equivalent
+                    }
+                }
+            }
+        }
+        // --- English QWERTY (Dubeolsik) -> Hangul converter ---
+// Maps key presses like "zlqhem" to "킹덤" (example depends on input)
+function enToHangulDubeolsik(input) {
+  // 2-beolsik key -> jamo mapping (lowercase only; we'll lowercase input)
+  const map = {
+    r: "ㄱ", s: "ㄴ", e: "ㄷ", f: "ㄹ", a: "ㅁ", q: "ㅂ", t: "ㅅ", d: "ㅇ", w: "ㅈ", c: "ㅊ",
+    z: "ㅋ", x: "ㅌ", v: "ㅍ", g: "ㅎ",
+    k: "ㅏ", o: "ㅐ", i: "ㅑ", j: "ㅓ", p: "ㅔ", u: "ㅕ", h: "ㅗ", y: "ㅛ",
+    n: "ㅜ", b: "ㅠ", m: "ㅡ", l: "ㅣ",
+  };
+
+  // Double consonants / compound vowels composition while typing
+  const doubleInitial = { "ㄱㄱ": "ㄲ", "ㄷㄷ": "ㄸ", "ㅂㅂ": "ㅃ", "ㅅㅅ": "ㅆ", "ㅈㅈ": "ㅉ" };
+  const compoundVowel = {
+    "ㅗㅏ": "ㅘ", "ㅗㅐ": "ㅙ", "ㅗㅣ": "ㅚ",
+    "ㅜㅓ": "ㅝ", "ㅜㅔ": "ㅞ", "ㅜㅣ": "ㅟ",
+    "ㅡㅣ": "ㅢ",
+  };
+  const compoundFinal = {
+    "ㄱㅅ": "ㄳ", "ㄴㅈ": "ㄵ", "ㄴㅎ": "ㄶ", "ㄹㄱ": "ㄺ", "ㄹㅁ": "ㄻ", "ㄹㅂ": "ㄼ",
+    "ㄹㅅ": "ㄽ", "ㄹㅌ": "ㄾ", "ㄹㅍ": "ㄿ", "ㄹㅎ": "ㅀ", "ㅂㅅ": "ㅄ",
+  };
+
+  const CHO = ["ㄱ","ㄲ","ㄴ","ㄷ","ㄸ","ㄹ","ㅁ","ㅂ","ㅃ","ㅅ","ㅆ","ㅇ","ㅈ","ㅉ","ㅊ","ㅋ","ㅌ","ㅍ","ㅎ"];
+  const JUNG = ["ㅏ","ㅐ","ㅑ","ㅒ","ㅓ","ㅔ","ㅕ","ㅖ","ㅗ","ㅘ","ㅙ","ㅚ","ㅛ","ㅜ","ㅝ","ㅞ","ㅟ","ㅠ","ㅡ","ㅢ","ㅣ"];
+  const JONG = ["","ㄱ","ㄲ","ㄳ","ㄴ","ㄵ","ㄶ","ㄷ","ㄹ","ㄺ","ㄻ","ㄼ","ㄽ","ㄾ","ㄿ","ㅀ","ㅁ","ㅂ","ㅄ","ㅅ","ㅆ","ㅇ","ㅈ","ㅊ","ㅋ","ㅌ","ㅍ","ㅎ"];
+
+  const isConsonant = (j) => "ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ".includes(j);
+  const isVowel = (j) => "ㅏㅐㅑㅒㅓㅔㅕㅖㅗㅘㅙㅚㅛㅜㅝㅞㅟㅠㅡㅢㅣ".includes(j);
+
+  // State: current syllable pieces
+  let L = ""; // initial consonant
+  let V = ""; // vowel
+  let T = ""; // final consonant
+  let out = "";
+
+  function flush() {
+    if (!L && !V && !T) return;
+    // If only consonant or vowel, output as is
+    if (!V) {
+      out += L || T;
+    } else if (!L) {
+      out += V;
+    } else {
+      const li = CHO.indexOf(L);
+      const vi = JUNG.indexOf(V);
+      const ti = JONG.indexOf(T);
+      if (li >= 0 && vi >= 0 && ti >= 0) {
+        const code = 0xAC00 + (li * 21 + vi) * 28 + ti;
+        out += String.fromCharCode(code);
+      } else {
+        out += (L + V + T);
+      }
+    }
+    L = V = T = "";
+  }
+
+  const s = String(input || "").toLowerCase();
+  for (let idx = 0; idx < s.length; idx++) {
+    const ch = s[idx];
+    const jamo = map[ch];
+
+    // Not a mapped key: flush and keep char
+    if (!jamo) {
+      flush();
+      out += ch;
+      continue;
+    }
+
+    // Consonant input
+    if (isConsonant(jamo)) {
+      if (!V) {
+        // building initial
+        if (!L) {
+          L = jamo;
+        } else {
+          const dbl = doubleInitial[L + jamo];
+          if (dbl) L = dbl;
+          else { flush(); L = jamo; }
+        }
+      } else {
+        // vowel exists -> this is final consonant
+        if (!T) {
+          T = jamo;
+        } else {
+          const cmb = compoundFinal[T + jamo];
+          if (cmb) T = cmb;
+          else { flush(); L = jamo; }
+        }
+      }
+      continue;
+    }
+
+    // Vowel input
+    if (isVowel(jamo)) {
+      if (!V) {
+        // if we had only final/initial consonant, treat as initial
+        if (!L && T) { L = T; T = ""; }
+        V = jamo;
+      } else if (!T) {
+        // try compound vowel
+        const cmb = compoundVowel[V + jamo];
+        if (cmb) V = cmb;
+        else { flush(); V = jamo; }
+      } else {
+        // We have a final consonant, but a vowel comes: split final to next syllable initial
+        // If compound final, split
+        const splitMap = {
+          "ㄳ": ["ㄱ","ㅅ"], "ㄵ": ["ㄴ","ㅈ"], "ㄶ": ["ㄴ","ㅎ"], "ㄺ": ["ㄹ","ㄱ"], "ㄻ": ["ㄹ","ㅁ"],
+          "ㄼ": ["ㄹ","ㅂ"], "ㄽ": ["ㄹ","ㅅ"], "ㄾ": ["ㄹ","ㅌ"], "ㄿ": ["ㄹ","ㅍ"], "ㅀ": ["ㄹ","ㅎ"],
+          "ㅄ": ["ㅂ","ㅅ"],
+        };
+        const parts = splitMap[T];
+        if (parts) {
+          // Keep first part as final of current, move second to next initial
+          const first = parts[0], second = parts[1];
+          T = first;
+          flush();
+          L = second;
+          V = jamo;
+        } else {
+          // Move T to next initial
+          const nextL = T;
+          T = "";
+          flush();
+          L = nextL;
+          V = jamo;
+        }
+      }
+      continue;
+    }
+  }
+
+  flush();
+  return out;
+}
+
+    </script>
+</head>
+<body class="text-gray-800">
+
+           
+ <!-- Header & Main Navigation -->
+<header class="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-20">
+  <div class="max-w-none w-full mx-auto px-4 sm:px-6 lg:px-8 py-3 flex justify-between items-center relative min-h-[72px]">
+
+    <!-- Left Buttons (Symmetrical to Search/Icons) -->
+    <div class="flex items-center space-x-6 text-gray-500">
+        <button id="all-btn" class="hover:text-[#F68F9D] transition font-bold text-sm">ALL</button>
+        <button id="vip-btn" class="hover:text-[#F68F9D] transition font-bold text-sm">VIP</button>
+    </div>
+
+    <!-- Logo/Site Name -->
+    <div class="absolute inset-x-0 top-1/2 -translate-y-1/2 flex justify-center pointer-events-none">
+      <img src="logo.png"
+           onerror="this.onerror=null;this.src='https://placehold.co/300x90/FFFFFF/000000?text=velyB';"
+           alt="velyB Logo"
+           class="h-12 w-auto pointer-events-auto">
+    </div>
+
+    <!-- Search + Icons -->
+    <div class="flex items-center ml-auto space-x-6 text-gray-500">
+      <div id="search-container"
+  class="transition-all duration-300 ease-in-out overflow-hidden"
+  style="width: 0px; max-width: 120px; opacity: 0;"
+>
+        <input
+          type="text"
+          id="search-input"
+          oninput="handleSearchInput()"
+          placeholder="시술명"
+          class="
+            w-[120px]
+            bg-transparent
+            border-0
+            border-b
+            border-gray-300
+            text-sm
+            text-gray-700
+            placeholder-gray-400
+            focus:outline-none
+            focus:border-[#F68F9D]
+            transition
+          "
+        >
+      </div>
+
+      <button id="search-toggle-btn" aria-label="Search" class="hover:text-[#F68F9D] transition" onclick="toggleSearchInput()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-search"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+      </button>
+
+      <button id="wishlist-toggle-btn" aria-label="Wishlist" class="hover:text-[#F68F9D] transition" onclick="toggleWishlistView()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-heart"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+      </button>
+    </div>
+
+    <div id="search-results-dropdown" class="absolute top-full right-4 mt-2 w-96 bg-white border border-gray-200 rounded-lg shadow-xl max-h-60 overflow-y-auto hidden z-20"></div>
+  </div>
+</header>
+
+<!-- ✅ ALL 버튼 클릭 시 나오는 이미지 팝업 (로고 아래=메뉴바 시작 위치) -->
+<div id="all-modal" class="fixed inset-0 z-50 hidden">
+  <!-- 바깥 클릭 영역(반투명 배경) -->
+  <div id="all-modal-backdrop" class="absolute inset-0 bg-black/40"></div>
+
+  <!-- 이미지 박스: 메뉴바 시작 위치(top:72px)에 고정 -->
+  <div class="absolute left-0 right-0 top-[72px] px-4">
+    <div id="all-modal-content" class="mx-auto w-full max-w-[1100px]">
+  <div class="relative overflow-hidden">
+  <!-- 슬라이드 트랙 -->
+  <div
+    id="all-slider-track"
+    class="flex items-start transition-transform duration-300 ease-in-out"
+  >
+    <img src="ALL-1.png" class="w-full h-auto object-contain shrink-0 rounded-xl" />
+<img src="ALL-2.png" class="w-full h-auto object-contain shrink-0 rounded-xl" />
+<img src="ALL-3.png" class="w-full h-auto object-contain shrink-0 rounded-xl" />
+<img src="ALL-4.png" class="w-full h-auto object-contain shrink-0 rounded-xl" />
+
+  </div>
+
+<!-- 왼쪽 화살표 -->
+<button
+  id="all-prev"
+  class="absolute left-2 top-1/2 -translate-y-1/2
+         bg-white/60 backdrop-blur-sm
+         rounded-full w-5 h-5
+         flex items-center justify-center
+         text-gray-500 text-[10px]
+         hover:bg-white/80 transition"
+>
+  ‹
+</button>
+
+<!-- 오른쪽 화살표 -->
+<button
+  id="all-next"
+  class="absolute right-2 top-1/2 -translate-y-1/2
+         bg-white/60 backdrop-blur-sm
+         rounded-full w-5 h-5
+         flex items-center justify-center
+         text-gray-500 text-[10px]
+         hover:bg-white/80 transition"
+>
+  ›
+</button>
+
+
+</div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Sub Navigation Menu (Pink Background) -->
+<nav
+  class="py-3 sticky top-[72px] z-10"
+  style="
+    background-image: url('menubar.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+  "
+>
+  <div class="max-w-none w-full mx-auto px-4 sm:px-6 lg:px-8">
+            <!-- 4. 메뉴 아이콘들 화면의 가운데에 정렬을 위해 justify-center 적용 -->
+            <div class="flex flex-col gap-3 text-sm font-medium items-center">
+  
+  <!-- 1열 -->
+  <div class="flex gap-2 justify-center flex-wrap">
+    <a href="#" class="menu-tab px-3 py-1.5 rounded-full bg-white text-gray-700 shadow-md hover:bg-[#F7E4E8] transition" onclick="setCategoryFilter('event', '한정 이벤트')" id="menu-event">한정 이벤트</a>
+    <a href="#" class="menu-tab px-3 py-1.5 rounded-full bg-white text-gray-700 shadow-md hover:bg-[#F7E4E8] transition" onclick="setCategoryFilter('prime', '프라임타임')" id="menu-prime">프라임타임</a>
+    <a href="#" class="menu-tab px-3 py-1.5 rounded-full bg-white text-gray-700 shadow-md hover:bg-[#F7E4E8] transition" onclick="setCategoryFilter('skincare', '피부관리')" id="menu-skincare">피부관리</a>
+    <a href="#" class="menu-tab px-3 py-1.5 rounded-full bg-white text-gray-700 shadow-md hover:bg-[#F7E4E8] transition" onclick="setCategoryFilter('booster', '부스터 ')" id="menu-booster">부스터</a>
+    <a href="#" class="menu-tab px-3 py-1.5 rounded-full bg-white text-gray-700 shadow-md hover:bg-[#F7E4E8] transition" onclick="setCategoryFilter('laser', '레이저 ')" id="menu-laser">레이저</a>
+    <a href="#" class="menu-tab px-3 py-1.5 rounded-full bg-white text-gray-700 shadow-md hover:bg-[#F7E4E8] transition" onclick="setCategoryFilter('allinone', '올인원테라피')" id="menu-allinone">올인원테라피</a>
+    <a href="#" class="menu-tab px-3 py-1.5 rounded-full bg-white text-gray-700 shadow-md hover:bg-[#F7E4E8] transition" onclick="setCategoryFilter('lifting', '리프팅')" id="menu-lifting">리프팅</a>
+    <a href="#" class="menu-tab px-3 py-1.5 rounded-full bg-white text-gray-700 shadow-md hover:bg-[#F7E4E8] transition" onclick="setCategoryFilter('trouble', '트러블')" id="menu-trouble">트러블</a>
+  </div>
+
+ <!-- 2열 -->
+  <div class="flex gap-2 justify-center flex-wrap">
+    <a href="#" class="menu-tab px-3 py-1.5 rounded-full bg-white text-gray-700 shadow-md hover:bg-[#F7E4E8] transition" onclick="setCategoryFilter('botox', '보톡스')" id="menu-botox">보톡스</a>
+    <a href="#" class="menu-tab px-3 py-1.5 rounded-full bg-white text-gray-700 shadow-md hover:bg-[#F7E4E8] transition" onclick="setCategoryFilter('filler', '필러')" id="menu-filler">필러</a>
+    <a href="#" class="menu-tab px-3 py-1.5 rounded-full bg-white text-gray-700 shadow-md hover:bg-[#F7E4E8] transition" onclick="setCategoryFilter('femalehair', '여성제모')" id="menu-femalehair">여성제모</a>
+    <a href="#" class="menu-tab px-3 py-1.5 rounded-full bg-white text-gray-700 shadow-md hover:bg-[#F7E4E8] transition" onclick="setCategoryFilter('malehair', '남성제모')" id="menu-malehair">남성제모</a>
+    <a href="#" class="menu-tab px-3 py-1.5 rounded-full bg-white text-gray-700 shadow-md hover:bg-[#F7E4E8] transition" onclick="setCategoryFilter('body', '체형관리')" id="menu-body">체형관리</a>
+    <a href="#" class="menu-tab px-3 py-1.5 rounded-full bg-white text-gray-700 shadow-md hover:bg-[#F7E4E8] transition" onclick="setCategoryFilter('injection', '영양면역주사')" id="menu-injection">영양면역주사</a>
+  </div>
+
+</div>
+
+    </nav>
+
+    <!-- Main Content Area -->
+    <main class="w-full mx-auto p-4 sm:p-6 lg:p-8">
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-2">
+            
+            <!-- Left Panel: Procedure List (1번 박스) -->
+            <section id="left-panel"class="border border-#F68F9D rounded-xl shadow-lg bg-white flex flex-col overflow-hidden max-h-[calc(100vh-8rem)] overflow-y-auto">
+                <div class="p-5">
+                    <h2 class="text-xm font-bold text-gray-800 pb-1 border-[#F68F9D] w-fit" id="procedure-list-title"></h2>
+                 
+                    <!-- ✅ VIP 이미지 (1번 박스 안) -->
+<div id="vip-images" class="hidden mt-4 space-y-4">
+  <img src="mem1.png"
+    alt="VIP 이미지 1"
+    class="w-full h-auto max-w-none rounded-lg border block"
+    draggable="false"
+  />
+  <img src="mem2.png"
+    alt="VIP 이미지 2"
+    class="w-full h-auto max-w-none rounded-lg border block"
+    draggable="false"
+  />
+</div>
+
+                   <div id="procedure-area" class="w-full">
+                        <!-- Header Row (Minimal height & Alignment) -->
+                        <div class="grid grid-cols-12 h-[25px] text-xs font-semibold text-gray-700 bg-white px-3 items-center border-b-2 border-[#F68F9D]">
+
+
+                            <div class="col-span-1"></div> <!-- Heart/Checkbox -->
+                            <div class="col-span-7 text-center">시술명</div> <!-- Center Aligned -->
+                            <div class="col-span-2 text-right">가격</div> <!-- Right Aligned -->
+                            <!-- 3. 횟수 가운데 정렬 -->
+                            <div class="col-span-1 flex items-center justify-center">횟수</div>
+                            <div class="col-span-1 text-right">합계</div> <!-- Right Aligned -->
+                        </div>
+
+                        <!-- Procedure List Body (Dynamic Content) -->
+                        <div id="procedure-list">
+                            <!-- Items will be inserted here by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Right Panel: Cart/Auto Chart (2번 박스) -->
+            <aside id="right-panel" class="border border-#F68F9D rounded-xl shadow-lg bg-white flex flex-col overflow-hidden max-h-[calc(100vh-8rem)] overflow-y-auto">
+                <div class="p-5">
+                    <div class="flex justify-between items-center mb-2">
+  <h2 class="text-xm font-bold text-gray-800 pb-1 border-[#F68F9D] w-fit">시술목록</h2>
+
+  <button
+    onclick="clearCart()"
+    class="clear-btn text-[#F68F9D] font-semibold px-3 py-1 rounded-full
+         hover:text-[#F68F9D] hover:bg-[#F7E4E8] transition"
+  >
+    CLEAR
+  </button>
+</div>
+                    <!-- Cart Table -->
+                    <div class="w-full">
+                        <!-- Header Row (Minimal height & Alignment) -->
+                        <div class="grid grid-cols-12 h-[25x] text-xs font-semibold text-gray-700 bg-white px-3 items-center border-b-2 border-[#F68F9D]">
+
+
+                            <div class="col-span-1 text-center"></div> <!-- Checkbox -->
+                            <div class="col-span-7 text-center">시술명</div> <!-- Center Aligned -->
+                            <div class="col-span-2 text-right">가격</div> <!-- Right Aligned -->
+                            <div class="col-span-1 flex items-center justify-center">횟수</div>
+                            <div class="col-span-1 text-right">합계</div> <!-- Right Aligned -->
+                        </div>
+                        
+                        <!-- Cart Items -->
+                        <div id="cart-list" class="min-h-40">
+                            <!-- Selected items will be inserted here by JavaScript -->
+                            <p id="empty-cart-message" class="text-gray-500 text-center py-8">시술 목록이 비어 있습니다.</p>
+                        </div>
+                        
+                        <!-- Final Total Amount -->
+  <div id="final-total-container" class="menubar-bg menubar-tint rounded-lg p-3">
+    <div class="flex justify-end text-ml font-semibold text-gray-800 tabular-nums final-emphasis">
+      <span>최종금액: </span>
+      <span id="final-total" class="ml-3 text-gray-800">0</span>
+    </div>
+
+  <!-- ✅ Membership Calculation -->
+  <div class="mt-3 pt-3 text-ml font-semibold text-gray-800 tabular-nums rounded-lg">
+    <div class="grid grid-cols-[72px_1fr_auto] gap-x-2 gap-y-1 items-center">
+<!-- ✅ 0행 (추가): 합계+잔액 복사 -->
+<button type="button" onclick="exportTotalWithBalance()"
+  class="w-[72px] h-[22px] flex items-center justify-center rounded-full text-[11px] font-medium bg-white text-[#F68F9D] border border-[#F68F9D] hover:bg-[#F7E4E8] transition whitespace-nowrap">
+  합계+잔액
+</button>
+
+<div class="col-span-2"></div>
+      <!-- 1행 -->
+      <button type="button" onclick="exportChartOnly()"
+        class="w-[72px] h-[22px] flex items-center justify-center rounded-full text-[11px] font-medium bg-white text-[#F68F9D] border border-[#F68F9D] hover:bg-[#F7E4E8] transition">
+        차트
+      </button>
+
+      <div class="text-right final-emphasis">회원권</div>
+      <input type="text" inputmode="numeric" id="membership-amount" value="0"
+        class="w-[10ch] justify-self-end text-right font-semibold bg-transparent border-0 p-0 focus:outline-none final-emphasis"
+        oninput="formatMembershipInput()" onkeydown="handleMembershipEnter(event)" />
+
+      <!-- 2행 -->
+      <button type="button" onclick="exportChartWithBalance()"
+        class="w-[72px] h-[22px] flex items-center justify-center rounded-full text-[11px] font-medium bg-white text-[#F68F9D] border border-[#F68F9D] hover:bg-[#F7E4E8] transition whitespace-nowrap">
+        차트+잔액
+      </button>
+
+      <div class="text-right final-emphasis">- 최종금액</div>
+      <div id="membership-final" class="text-right final-emphasis">0</div>
+
+      <!-- 3행 -->
+      <button type="button" id="btn-membership-plus" onclick="toggleMembershipPopup(event)"
+        class="w-[72px] h-[22px] flex items-center justify-center rounded-full text-[11px] font-medium bg-white text-[#F68F9D] border border-[#F68F9D] hover:bg-[#F7E4E8] transition whitespace-nowrap">
+        회원권+
+      </button>
+
+      <div class="text-right font-bold text-[#F66C82] final-emphasis">차감 후 잔액</div>
+      <div id="membership-balance" class="text-right font-bold text-[#F66C82] final-emphasis">0</div>
+
+    </div>
+  </div>
+</div>
+
+
+
+</div>
+
+
+
+
+
+
+    </main>
+
+    <script>
+  // ✅ (1) 구글시트 CSV 주소를 여기에 붙여넣기 (products 시트)
+  const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSR5YlHFBGiaLIDVxyYiaE0lQxjrolOyu0Tbf9hKzBPxEaCsKoXBjylECHvENyyzVLN2yCJkGpUwbBk/pub?gid=3054119&single=true&output=csv";
+
+  // ✅ (2) 예전 하드코딩 배열 대신, 시트에서 불러와 채울 변수
+  let allProceduresData = [];
+
+  // ✅ (3) CSV 파서
+  function parseCSV(text) {
+    const rows = [];
+    let row = [];
+    let cur = "";
+    let inQuotes = false;
+
+    for (let i = 0; i < text.length; i++) {
+      const ch = text[i];
+      const next = text[i + 1];
+
+      if (ch === '"' && inQuotes && next === '"') {
+        cur += '"';
+        i++;
+        continue;
+      }
+      if (ch === '"') {
+        inQuotes = !inQuotes;
+        continue;
+      }
+      if (ch === "," && !inQuotes) {
+        row.push(cur);
+        cur = "";
+        continue;
+      }
+      if ((ch === "\n" || ch === "\r") && !inQuotes) {
+        if (ch === "\r" && next === "\n") i++;
+        row.push(cur);
+        cur = "";
+        if (row.some(cell => String(cell).trim() !== "")) rows.push(row);
+        row = [];
+        continue;
+      }
+      cur += ch;
+    }
+
+    row.push(cur);
+    if (row.some(cell => String(cell).trim() !== "")) rows.push(row);
+
+    return rows;
+  }
+
+  // ✅ (4) 구글시트(products 시트)에서 데이터 불러오기
+  async function loadProceduresFromSheet() {
+    if (!SHEET_CSV_URL || SHEET_CSV_URL.includes("여기에_")) {
+      console.warn("SHEET_CSV_URL이 설정되지 않았습니다.");
+      return;
+    }
+
+    const res = await fetch(SHEET_CSV_URL, { cache: "no-store" });
+    if (!res.ok) throw new Error("시트 데이터를 불러오지 못했습니다.");
+
+    const csvText = await res.text();
+    const table = parseCSV(csvText);
+    if (table.length < 2) throw new Error("CSV 데이터가 비어있습니다.");
+
+    const headers = table[0].map(h => String(h).trim());
+    const idx = {
+      id: headers.indexOf("id"),
+      name: headers.indexOf("name"),
+      price: headers.indexOf("price"),
+      category: headers.indexOf("category"),
+      active: headers.indexOf("active"),
+      memo: headers.indexOf("memo"),
+    };
+
+    // 필수 컬럼 체크
+    if (idx.id < 0 || idx.name < 0 || idx.price < 0 || idx.category < 0) {
+      throw new Error("시트 헤더가 id, name, price, category 를 포함해야 합니다.");
+    }
+
+    const items = [];
+    for (let r = 1; r < table.length; r++) {
+      const line = table[r];
+
+      const id = String(line[idx.id] ?? "").trim();
+      const name = String(line[idx.name] ?? "").trim();
+      const category = String(line[idx.category] ?? "").trim();
+      const priceRaw = String(line[idx.price] ?? "").replace(/[^\d]/g, "");
+      const price = Number(priceRaw);
+      const memo = idx.memo >= 0 ? String(line[idx.memo] ?? "").trim() : "";
+
+      // active: TRUE/true/1/y/yes 정도만 활성로 인정 (없으면 기본 true)
+      let isActive = true;
+      if (idx.active >= 0) {
+        const a = String(line[idx.active] ?? "").trim().toLowerCase();
+        isActive = ["true", "1", "y", "yes"].includes(a);
+      }
+
+      if (!id || !name || !category) continue;
+      if (!Number.isFinite(price)) continue;
+      if (!isActive) continue; // ✅ active가 꺼져있으면 제외
+
+      items.push({ id, name, price, category, memo });
+    }
+
+    allProceduresData = items;
+    console.log("✅ 시트 데이터 로딩 완료:", allProceduresData.length);
+  }
+
+  
+        // 전역 상태 변수
+        let cart = {}; 
+        let wishlist = {}; 
+        let isWishlistView = false; 
+        let currentCategory = 'event';
+        let currentCategoryName = '한정 이벤트';
+        let isSearchVisible = false;
+
+        // DOM 요소 가져오기
+        const procedureList = document.getElementById('procedure-list');
+        const procedureListTitle = document.getElementById('procedure-list-title');
+        const cartList = document.getElementById('cart-list');
+        const finalTotalDisplay = document.getElementById('final-total');
+        const emptyCartMessage = document.getElementById('empty-cart-message');
+        const wishlistToggleButton = document.getElementById('wishlist-toggle-btn');
+        const finalTotalContainer = document.getElementById('final-total-container');
+        const menuTabs = document.querySelectorAll('.menu-tab');
+        const searchContainer = document.getElementById('search-container');
+        const searchInput = document.getElementById('search-input');
+        const searchResultsDropdown = document.getElementById('search-results-dropdown');
+
+        const calculateTotalTaxIncludedPrice = (price, quantity) => Math.floor(price * quantity * 1.1);
+        
+
+        function setCategoryFilter(category, categoryName) {
+            if (isWishlistView) {
+                isWishlistView = false;
+                updateWishlistToggleButtonUI(); 
+            }
+            
+            currentCategory = category;
+            currentCategoryName = categoryName;
+
+            menuTabs.forEach(tab => {
+                tab.classList.remove('active-menu');
+                tab.classList.add('bg-white', 'text-gray-700');
+            });
+            const activeTab = document.getElementById(`menu-${category}`);
+            if (activeTab) {
+                activeTab.classList.add('active-menu');
+                activeTab.classList.remove('text-gray-700', 'bg-white', 'hover:bg-[#F7E4E8]');
+            }
+
+            procedureListTitle.textContent = categoryName;
+            renderProcedureList();
+        }
+window.setCategoryFilter = setCategoryFilter;
+
+        function updateWishlistToggleButtonUI() {
+            if (isWishlistView) {
+                wishlistToggleButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#F198AE" stroke="#F198AE" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-heart"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>`;
+            } else {
+                wishlistToggleButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-heart"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>`;
+            }
+        }
+
+        function renderProcedureList() {
+            let filteredProcedures = allProceduresData.filter(proc => {
+                const categoryMatch = proc.category === currentCategory;
+                const wishlistMatch = !!wishlist[proc.id];
+                if (isWishlistView) return wishlistMatch;
+                return categoryMatch;
+            });
+
+            if (isWishlistView && Object.keys(wishlist).length === 0) {
+                procedureList.innerHTML = `<p class="text-center text-gray-500 py-2 col-span-12">관심 시술 목록이 비어 있습니다.</p>`;
+                return;
+            }
+            if (!isWishlistView && filteredProcedures.length === 0) {
+                procedureList.innerHTML = `<p class="text-center text-gray-500 py-2 col-span-12">선택된 카테고리에 시술 항목이 없습니다.</p>`;
+                return;
+            }
+
+            procedureList.innerHTML = filteredProcedures.map(proc => {
+                const currentQuantity = cart[proc.id] ? cart[proc.id].quantity : 1;
+                const totalTaxIncludedPrice = calculateTotalTaxIncludedPrice(proc.price, currentQuantity);
+                
+                const isFavorited = !!wishlist[proc.id];
+                const isChecked = !!cart[proc.id];
+
+                const heartIconSvg = isFavorited
+                    ? `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="#F198AE" stroke="#F198AE" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-heart"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>`
+                    : `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-heart text-[#F68F9D]/70 hover:text-[#F68F9D]"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>`;
+
+                const renderVisualCheckbox = (id, checked) => `
+                    <label for="check-${id}" class="cursor-pointer">
+                        <input type="checkbox" id="check-${id}" class="form-checkbox h-4 w-4 text-[#F68F9D] rounded focus:ring-[#F68F9D] cursor-pointer hidden" onchange="handleCartCheckboxChange('${id}')" ${checked ? 'checked' : ''}>
+                        <div class="w-3 h-3 border border-[#F68F9D] rounded transition duration-150 ease-in-out flex items-center justify-center ${checked ? 'bg-[#F68F9D] border-[#F68F9D]' : 'bg-white'}">
+                            ${checked ? '<svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 text-white" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 13.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>' : ''}
+                        </div>
+                    </label>
+                `;
+
+                return `
+                    <div class="procedure-item grid grid-cols-12 items-center text-xs text-gray-800 py-2 border-b border-pink-50/50 hover:bg-[#F7E4E8] transition" data-id="${proc.id}">
+                        <div class="col-span-1 flex justify-center items-center space-x-1">
+                            <button onclick="toggleWishlist('${proc.id}')" class="wishlist-icon focus:outline-none" id="heart-${proc.id}" aria-label="Add to wishlist">
+                                ${heartIconSvg}
+                            </button>
+                            ${renderVisualCheckbox(proc.id, isChecked)}
+                        </div>
+                        <label
+  for="check-${proc.id}"
+  class="col-span-7 cursor-pointer text-left pl-2 pr-1"
+  title="${proc.memo || ''}"
+>
+  ${proc.name}
+</label>
+                        <div class="col-span-2 text-right text-gray-600">${formatPrice(proc.price)}</div>
+                        <div class="col-span-1 flex justify-center">
+                            <div class="quantity-control flex-row !ml-0">
+                                <input type="number" id="quantity-${proc.id}" value="${Number(currentQuantity) || 1}" min="1" max="9" readonly="readonly">
+                                <div class="up-down-container">
+                                    <button onclick="changeQuantity('${proc.id}', 1)" aria-label="Increase quantity">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="7" height="7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucude-chevron-up"><path d="m18 15-6-6-6 6"/></svg>
+                                    </button>
+                                    <button onclick="changeQuantity('${proc.id}', -1)" aria-label="Decrease quantity">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="7" height="7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-down"><path d="m6 9 6 6 6-6"/></svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-span-1 text-right text-gray-700 pr-3" id="total-${proc.id}">${formatPrice(totalTaxIncludedPrice)}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function changeQuantity(procedureId, delta) {
+            const inputElement = document.getElementById(`quantity-${procedureId}`);
+            if (!inputElement) return;
+            let currentQuantity = parseInt(inputElement.value, 10);
+            let newQuantity = currentQuantity + delta;
+            if (newQuantity < 1) newQuantity = 1;
+            if (newQuantity > 99) newQuantity = 99; 
+            updateQuantity(procedureId, newQuantity);
+        }
+
+        function updateQuantity(procedureId, newQuantity) {
+            let quantity = parseInt(newQuantity, 10);
+            if (isNaN(quantity) || quantity < 1) quantity = 1;
+            else if (quantity > 99) quantity = 99;
+
+            const inputElement = document.getElementById(`quantity-${procedureId}`);
+            if (inputElement) inputElement.value = quantity;
+
+            const proc = allProceduresData.find(p => p.id === procedureId);
+            if (!proc) return;
+
+            const newTotalTaxIncluded = calculateTotalTaxIncludedPrice(proc.price, quantity);
+
+            const totalDisplayElement = document.getElementById(`total-${proc.id}`);
+            if (totalDisplayElement) totalDisplayElement.textContent = formatPrice(newTotalTaxIncluded);
+
+            if (cart[procedureId]) {
+                cart[procedureId].quantity = quantity;
+                cart[procedureId].totalTaxIncludedPrice = newTotalTaxIncluded;
+                updateCart();
+            }
+        }
+
+      function toggleCartFromSearch(procedureId) {
+    const proc = allProceduresData.find(p => p.id === procedureId);
+    if (!proc) return;
+
+    // 이미 담겼으면 제거, 아니면 추가(수량은 화면에 있으면 그 값, 없으면 1)
+    if (cart[procedureId]) {
+        delete cart[procedureId];
+        updateCart();
+        return;
+    }
+
+    const quantityInput = document.getElementById(`quantity-${procedureId}`);
+    const currentQuantity = quantityInput ? parseInt(quantityInput.value, 10) : 1;
+
+    cart[procedureId] = {
+        id: proc.id,
+        name: proc.name,
+        price: proc.price,
+        quantity: currentQuantity || 1,
+        totalTaxIncludedPrice: calculateTotalTaxIncludedPrice(proc.price, currentQuantity || 1),
+        checked: true
+    };
+
+    updateCart();
+}
+
+function handleCartCheckboxChange(procedureId) {
+    const checkbox = document.getElementById(`check-${procedureId}`);
+    if (!checkbox) return;
+
+    const isChecked = checkbox.checked;
+    const proc = allProceduresData.find(p => p.id === procedureId);
+    if (!proc) return;
+
+    const quantityInput = document.getElementById(`quantity-${procedureId}`);
+    const currentQuantity = quantityInput ? parseInt(quantityInput.value, 10) : 1;
+
+    if (isChecked) {
+        cart[procedureId] = {
+            id: proc.id,
+            name: proc.name,
+            price: proc.price,
+            quantity: currentQuantity,
+            totalTaxIncludedPrice: calculateTotalTaxIncludedPrice(proc.price, currentQuantity),
+            checked: true
+        };
+    } else {
+        delete cart[procedureId];
+    }
+
+    // ✅ (좌측) 체크박스 핑크 표시 (label 안의 div를 정확히 잡기)
+    const visualCheckbox = checkbox.nextElementSibling;
+    if (visualCheckbox) {
+        if (isChecked) {
+            visualCheckbox.classList.add('bg-[#F68F9D]', 'border-[#F68F9D]');
+            visualCheckbox.innerHTML =
+                '<svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 text-white" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 13.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>';
+        } else {
+            visualCheckbox.classList.remove('bg-[#F68F9D]', 'border-[#F68F9D]');
+            visualCheckbox.innerHTML = '';
+        }
+    }
+
+    updateCart();
+}
+
+function handleCartItemCheckChange(procedureId) {
+    const checkbox = document.getElementById(`cart-check-${procedureId}`);
+    if (!checkbox) return;
+
+    const isChecked = checkbox.checked;
+    if (cart[procedureId]) cart[procedureId].checked = isChecked;
+
+    const visualCheckbox = checkbox.nextElementSibling;
+    if (visualCheckbox) {
+        if (isChecked) {
+            visualCheckbox.classList.add('bg-[#F68F9D]', 'border-[#F68F9D]');
+            visualCheckbox.innerHTML =
+                '<svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 text-white" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 13.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>';
+        } else {
+            visualCheckbox.classList.remove('bg-[#F68F9D]', 'border-[#F68F9D]');
+            visualCheckbox.innerHTML = '';
+        }
+    }
+
+    updateCart();
+}
+
+
+function updateCart() {
+    let totalAmount = 0;
+    const selectedItems = Object.values(cart).sort((a, b) => a.id.localeCompare(b.id));
+
+    if (selectedItems.length === 0) {
+        cartList.innerHTML = '';
+        emptyCartMessage.classList.remove('hidden');
+        finalTotalContainer.classList.add('hidden');
+    } else {
+        emptyCartMessage.classList.add('hidden');
+        finalTotalContainer.classList.remove('hidden');
+
+        cartList.innerHTML = selectedItems.map(item => {
+            if (item.checked) totalAmount += item.totalTaxIncludedPrice;
+
+            const renderVisualCartCheckbox = (id, checked) => `
+                <label for="cart-check-${id}" class="cursor-pointer flex justify-center items-center h-full">
+                    <input type="checkbox" id="cart-check-${id}"
+                        class="form-checkbox h-4 w-4 text-[#F68F9D] rounded focus:ring-[#F68F9D] cursor-pointer hidden"
+                        onchange="handleCartItemCheckChange('${id}')" ${checked ? 'checked' : ''}>
+                    <div class="w-3 h-3 border border-[#F68F9D] rounded transition duration-150 ease-in-out flex items-center justify-center ${checked ? 'bg-[#F68F9D] border-[#F68F9D]' : 'bg-white'}">
+                        ${checked ? '<svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 text-white" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 13.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>' : ''}
+                    </div>
+                </label>
+            `;
+
+            const styleClass = item.checked ? 'text-gray-800' : 'text-gray-400';
+
+            return `
+                <div class="grid grid-cols-12 items-center text-xs py-2 border-b border-gray-100">
+                    <div class="col-span-1 flex justify-center items-center gap-1">
+  ${renderVisualCartCheckbox(item.id, item.checked)}
+
+  <button
+    onclick="removeCartItem('${item.id}')"
+    class="w-3 h-3 rounded-full border border-#F68F9D
+           text-[#F68F9D] text-xs font-bold
+           flex items-center justify-center
+           hover:bg-pink-100 transition"
+    title="삭제"
+  >
+    −
+  </button>
+</div>
+
+                    <div class="col-span-8 text-left pl-1 pr-1 cart-item-name ${styleClass}">${item.name}</div>
+                    <div class="col-span-1 text-right text-gray-600 ${styleClass}">${formatPrice(item.price)}</div>
+                    <div class="col-span-1 text-center ${styleClass}">${item.quantity}</div>
+                    <div class="col-span-1 text-right text-gray-700 pr-3 ${styleClass}">${formatPrice(item.totalTaxIncludedPrice)}</div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    finalTotalDisplay.textContent = formatPrice(totalAmount);
+    updateMembershipBalance();
+}
+
+
+
+        function toggleWishlist(procedureId) {
+            const isFavorited = !!wishlist[procedureId];
+            if (isFavorited) delete wishlist[procedureId];
+            else wishlist[procedureId] = true;
+            renderProcedureList();
+        }
+
+        function toggleWishlistView() {
+            isWishlistView = !isWishlistView;
+            updateWishlistToggleButtonUI();
+
+            if (isWishlistView) {
+                procedureListTitle.textContent = '관심시술';
+                menuTabs.forEach(tab => tab.classList.remove('active-menu', 'text-white', 'bg-pink-600'));
+            } else {
+                procedureListTitle.textContent = currentCategoryName;
+                const activeTab = document.getElementById(`menu-${currentCategory}`);
+                if (activeTab) {
+                    activeTab.classList.add('active-menu');
+                    activeTab.classList.remove('text-gray-700', 'bg-white', 'hover:bg-[#F7E4E8]');
+                }
+            }
+            renderProcedureList();
+        }
+
+        // ✅ 수정: 검색 토글 (단위 + 패딩 불필요 제거)
+        function toggleSearchInput() {
+            isSearchVisible = !isSearchVisible;
+            
+            if (isSearchVisible) {
+                searchContainer.style.width = '160px';
+                searchContainer.style.opacity = '1';
+                searchInput.focus();
+            } else {
+                searchContainer.style.width = '0px';
+                searchContainer.style.opacity = '0';
+                searchInput.value = '';
+                searchResultsDropdown.classList.add('hidden');
+            }
+        }
+
+        
+function handleSearchInput() {
+  const queryRaw = (searchInput.value || "").replace(/\s+/g, "").toLowerCase();
+  const queryKo = enToHangulDubeolsik(queryRaw).replace(/\s+/g, "").toLowerCase();
+
+  // 둘 다 짧으면 숨김
+  if (queryRaw.length < 2 && queryKo.length < 2) {
+    searchResultsDropdown.classList.add("hidden");
+    searchResultsDropdown.innerHTML = "";
+    return;
+  }
+
+  const searchResults = allProceduresData.filter((proc) => {
+    const name = (proc.name || "").replace(/\s+/g, "").toLowerCase();
+    return name.includes(queryRaw) || name.includes(queryKo);
+  });
+
+  // ✅ 이 줄이 있어야 검색이 “화면에” 보여요
+  renderSearchResults(searchResults);
+}
+
+function renderSearchResults(results) {
+  // results가 없으면 현재 검색어로 다시 계산 (검색결과 클릭 후 재렌더 등 대비)
+  if (!results) {
+    const queryRaw = (searchInput?.value || "").replace(/\s+/g, "").toLowerCase();
+    const queryKo = enToHangulDubeolsik(queryRaw).replace(/\s+/g, "").toLowerCase();
+
+    if (queryRaw.length < 2 && queryKo.length < 2) {
+      searchResultsDropdown.classList.add("hidden");
+      searchResultsDropdown.innerHTML = "";
+      return;
+    }
+
+    results = allProceduresData.filter((proc) => {
+      const name = (proc.name || "").replace(/\s+/g, "").toLowerCase();
+      return name.includes(queryRaw) || name.includes(queryKo);
+    });
+  }
+
+  if (!Array.isArray(results) || results.length === 0) {
+    searchResultsDropdown.innerHTML = `
+      <div class="p-3 text-xs text-gray-500">검색 결과가 없습니다.</div>
+    `;
+    searchResultsDropdown.classList.remove("hidden");
+    return;
+  }
+
+  searchResultsDropdown.innerHTML = results
+    .map((proc) => {
+      const isFavorited = !!wishlist[proc.id];
+      const isChecked = !!cart[proc.id];
+
+      const heartSvg = isFavorited
+        ? `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="#F198AE" stroke="#F198AE" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>`
+        : `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-[#F68F9D]/70 hover:text-[#F68F9D]"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>`;
+
+      const checkSvg = isChecked
+        ? `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F198AE" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>`
+        : `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-400 hover:text-[#F68F9D]"><path d="M12 5v14M5 12h14"/></svg>`;
+
+      return `
+        <div class="flex items-center gap-2 p-3 text-xs border-b border-gray-100 hover:bg-[#F7E4E8] transition"
+             onclick="selectSearchResult('${proc.category}', '${proc.id}')">
+
+          <button class="shrink-0"
+                  onclick="event.stopPropagation(); toggleWishlist('${proc.id}'); renderSearchResults();">
+            ${heartSvg}
+          </button>
+
+          <button class="shrink-0"
+                  onclick="event.stopPropagation(); toggleCartFromSearch('${proc.id}'); renderSearchResults();">
+            ${checkSvg}
+          </button>
+
+          <div class="flex-1 min-w-0">
+            <div class="font-medium text-gray-800 truncate">${proc.name}</div>
+          </div>
+
+          <div class="text-right text-[#F68F9D] whitespace-nowrap">${formatPrice(proc.price)}원</div>
+        </div>
+      `;
+    })
+    .join("");
+
+  searchResultsDropdown.classList.remove("hidden");
+} // ✅ renderSearchResults 함수는 여기서 “끝”나야 함
+
+function toggleCartFromSearch(procedureId) {
+  const proc = allProceduresData.find((p) => p.id === procedureId);
+  if (!proc) return;
+
+  if (cart[procedureId]) {
+    delete cart[procedureId];
+  } else {
+    // 검색창에서 체크할 때도 기본 수량은 1로
+    cart[procedureId] = {
+      id: proc.id,
+      name: proc.name,
+      price: proc.price,
+      quantity: 1,
+      totalTaxIncludedPrice: calculateTotalTaxIncludedPrice(proc.price, 1),
+      checked: true,
+    };
+  }
+
+  updateCart();
+  renderProcedureList();
+}
+
+function selectSearchResult(category, procedureId) {
+  toggleSearchInput();
+
+  const categoryElement = document.getElementById(`menu-${category}`);
+  const categoryName = categoryElement
+    ? categoryElement.textContent + " 시술 목록"
+    : "검색 결과";
+
+  setCategoryFilter(category, categoryName);
+
+  // ⬇️ 렌더 완료 후 해당 시술 위치로 이동 + 강조
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      const target = document.querySelector(
+        `.procedure-item[data-id="${procedureId}"]`
+      );
+      if (!target) return;
+
+      target.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
       });
+
+      target.classList.add("search-hit");
+      setTimeout(() => {
+        target.classList.remove("search-hit");
+      }, 900);
+    });
+  });
+}
+
+window.onload = async () => {
+  await loadProceduresFromSheet(); // ✅ 구글시트에서 상품 먼저 로딩
+  setCategoryFilter(currentCategory, currentCategoryName);
+  updateCart();
+};
+
+
+
+function removeCartItem(procedureId) {
+  if (!cart[procedureId]) return;
+  delete cart[procedureId];
+  updateCart();
+  renderProcedureList(); // 좌측 체크 상태도 같이 정리
+}
+
+function clearCart() {
+  // cart는 let cart = {} 로 선언돼 있으니 통째로 비워도 OK
+  cart = {};
+
+  // 오른쪽 목록/합계 갱신
+  updateCart();
+
+  // 왼쪽 체크박스/합계 표시도 같이 원복
+  renderProcedureList();
+
+  // (선택) 회원권 입력도 같이 0으로 초기화하고 싶으면 주석 해제
+  const membershipInput = document.getElementById('membership-amount');
+  if (membershipInput) membershipInput.value = '0';
+  updateMembershipBalance();
+}
+
+// inline onclick에서 안정적으로 접근되도록 전역에 박아주기(안전장치)
+window.clearCart = clearCart;
+
+
+        window.formatPrice = function (value) {
+    const num = parseInt(String(value || '').replace(/[^\d]/g, ''), 10) || 0;
+    return num.toLocaleString('ko-KR');
+  };
+  // ✅ 회원권 입력/계산 (전역 등록 필수)
+window.handleMembershipInput = function () {
+  const input = document.getElementById('membership-amount');
+  if (!input) return;
+
+  const digits = String(input.value || '').replace(/\D/g, '').slice(0, 8);
+  input.value = digits ? Number(digits).toLocaleString('ko-KR') : '0';
+
+  window.updateMembershipBalance();
+};
+
+window.updateMembershipBalance = function () {
+  const membershipEl = document.getElementById('membership-amount');
+  const finalTotalEl = document.getElementById('final-total');
+  const outFinalEl = document.getElementById('membership-final');
+  const outBalEl = document.getElementById('membership-balance');
+  if (!membershipEl || !finalTotalEl || !outFinalEl || !outBalEl) return;
+
+  const membership = Number(String(membershipEl.value || '').replace(/\D/g, '')) || 0;
+  const finalTotal = Number(String(finalTotalEl.textContent || '').replace(/\D/g, '')) || 0;
+
+  outFinalEl.textContent = finalTotal.toLocaleString('ko-KR');
+  outBalEl.textContent = (membership - finalTotal).toLocaleString('ko-KR');
+};
+
+function formatMembershipInput() {
+  const input = document.getElementById('membership-amount');
+  if (!input) return;
+
+  const digits = input.value.replace(/\D/g, '');
+  const num = Number(digits) || 0;
+
+  input.value = num.toLocaleString('ko-KR');
+}
+function handleMembershipEnter(e) {
+  if (e.key !== 'Enter') return;
+
+  e.preventDefault();
+  updateMembershipBalance();
+}
+// ✅ 회원권+ 팝업 옵션 목록 (원하는대로 텍스트 수정/추가 가능)
+const membershipOptions = [
+{ id: 'vip1000', label: 'VIP1000+300', checked: false },
+{ id: 'vip600',  label: 'VIP600+150',  checked: false },
+  { id: 'vip500',  label: 'VIP500+125',  checked: false },
+  { id: 'vip400',  label: 'VIP400+80',   checked: false },
+  { id: 'vip300',  label: 'VIP300+60',   checked: false },
+  { id: 'vip200',  label: 'VIP200+30',   checked: false },
+  { id: 'vip100',  label: 'VIP100+10',   checked: false },
+
+
+
+  { id: 'petit50', label: '쁘띠50+10',   checked: false },
+  { id: 'petit20', label: '쁘띠20+3',    checked: false },
+];
+
+// ✅ 팝업 DOM이 없으면 자동으로 만들어서 body에 붙임
+function ensureMembershipPopup() {
+  if (document.getElementById('membership-popup')) return;
+
+  const popup = document.createElement('div');
+  popup.id = 'membership-popup';
+  popup.className = `
+    hidden fixed z-50
+    bg-white border border-gray-200
+    rounded-lg shadow-xl
+    p-3 text-[12px]
+    w-[260px]
+  `.trim();
+
+  popup.innerHTML = `
+    <div id="membership-popup-list" class="grid grid-cols-2 gap-x-4 gap-y-2"></div>
+
+    <div class="flex justify-end mt-3">
+      <button
+        type="button"
+        id="btn-make-chart"
+        onclick="generateChartFromMembershipPopup()"
+        class="px-4 py-[3px] rounded-full text-[12px] font-medium
+               bg-white text-[#F68F9D]
+               border border-#F68F9D
+               hover:bg-[#F7E4E8] transition"
+      >
+        차트생성
+      </button>
+    </div>
+  `;
+
+  document.body.appendChild(popup);
+
+  // (기능은 나중) 지금은 눌러도 아무것도 안 하게 비워둠
+  document.getElementById('btn-make-chart').addEventListener('click', (e) => {
+    e.stopPropagation();
+    // TODO: 나중에 차트생성 기능 연결
+  });
+}
+function renderMembershipPopupList() {
+  const listEl = document.getElementById('membership-popup-list');
+  if (!listEl) return;
+
+  listEl.innerHTML = membershipOptions.map(opt => `
+    <label class="flex items-center gap-2 select-none cursor-pointer">
+      <input
+        type="checkbox"
+        value="${opt.label}"
+        class="h-3 w-3 accent--[#F68F9D]"
+        ${opt.checked ? 'checked' : ''}
+        onchange="handleMembershipOptionToggle('${opt.id}', this.checked)"
+      />
+      <span class="text-gray-700">${opt.label}</span>
+    </label>
+  `).join('');
+}
+
+function handleMembershipOptionToggle(id, checked) {
+  const target = membershipOptions.find(o => o.id === id);
+  if (!target) return;
+  target.checked = checked;
+}
+
+// ✅ 버튼 옆에 팝업 위치시키기
+function positionMembershipPopup() {
+  const btn = document.getElementById('btn-membership-plus');
+  const popup = document.getElementById('membership-popup');
+  if (!btn || !popup) return;
+
+  const r = btn.getBoundingClientRect();
+  const gap = 8;
+
+  // 기본: 버튼 오른쪽에 붙이기
+  let left = r.right + gap;
+  let top = r.top - 6;
+
+  // 화면 밖으로 나가면 왼쪽으로
+  const popupW = 260;
+  if (left + popupW > window.innerWidth - 8) {
+    left = r.left - popupW - gap;
+  }
+
+  // 위/아래 보정
+  const popupH = 220; // 대충(옵션 늘리면 자동으로 커짐)
+  if (top + popupH > window.innerHeight - 8) {
+    top = window.innerHeight - popupH - 8;
+  }
+  if (top < 8) top = 8;
+
+  popup.style.left = `${Math.max(8, left)}px`;
+  popup.style.top = `${top}px`;
+}
+
+function openMembershipPopup() {
+  ensureMembershipPopup();
+  renderMembershipPopupList();
+
+  const popup = document.getElementById('membership-popup');
+  popup.classList.remove('hidden');
+  positionMembershipPopup();
+}
+
+function closeMembershipPopup() {
+  const popup = document.getElementById('membership-popup');
+  if (!popup) return;
+  popup.classList.add('hidden');
+}
+
+// ✅ "회원권+" 버튼에서 호출
+function toggleMembershipPopup(event) {
+  event.stopPropagation();
+  ensureMembershipPopup();
+
+  const popup = document.getElementById('membership-popup');
+  const isOpen = !popup.classList.contains('hidden');
+
+  if (isOpen) closeMembershipPopup();
+  else openMembershipPopup();
+}
+
+// ✅ 팝업 밖 클릭하면 닫기 + ESC로 닫기 + 리사이즈 시 위치 보정
+document.addEventListener('click', (e) => {
+  const popup = document.getElementById('membership-popup');
+  const btn = document.getElementById('btn-membership-plus');
+  if (!popup || popup.classList.contains('hidden')) return;
+
+  if (popup.contains(e.target) || (btn && btn.contains(e.target))) return;
+  closeMembershipPopup();
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closeMembershipPopup();
+});
+
+window.addEventListener('resize', () => {
+  const popup = document.getElementById('membership-popup');
+  if (!popup || popup.classList.contains('hidden')) return;
+  positionMembershipPopup();
+});
+// ✅ 차트 버튼: "차트만" 텍스트 추출 + 자동 복사
+function exportChartOnly() {
+  try {
+    // cart 전역이 이미 있음 (너 코드에 있음)
+    const items = Object.values(cart || {})
+      .filter(it => it && it.checked)                 // ✅ 체크된 항목만
+      .sort((a, b) => String(a.id).localeCompare(String(b.id)));
+
+    if (items.length === 0) {
+      alert('선택된 시술이 없습니다.');
+      return;
+    }
+
+    let total = 0;
+
+    const lines = items.map(item => {
+      const rawName = String(item.name || '').trim();
+      const price = Number(item.totalTaxIncludedPrice || 0);
+      total += price;
+
+      // 1) "n회" -> "n-1"
+      let name = rawName.replace(/(\d+)\s*회/g, (_, n) => `${n}-1`);
+
+      // 2) 횟수( n회 )가 아예 없던 시술이면 끝에 " 1-1" 붙이기
+      //    (이미 변환된 "n-1"이 있으면 패스)
+      if (!/(\d+)-1/.test(name)) {
+  const qty = Number(item.quantity) || 1;
+  name = `${name} ${qty}-1`;
+}
+
+      // 3) + 기호 주변 공백 정리 (예: " 20-1 + 셀바이브 2-1" -> "20-1+셀바이브 2-1")
+      name = name.replace(/\s*\+\s*/g, '+');
+
+      // 4) "셀바이브2-1" 같이 붙는 케이스를 "셀바이브 2-1"로
+      name = name.replace(/([가-힣A-Za-z])(\d+-1)/g, '$1 $2');
+
+      // 결과 라인: "이름  금액원"
+      return `${name} ${price.toLocaleString('ko-KR')}원`;
     });
 
-    // 최종 결제 금액 업데이트
-    function updateFinalTotal() {
-      const rightTableBody = document.getElementById("rightTable").querySelector("tbody");
-      const finalTotalElement = document.getElementById("finalTotal");
+    lines.push(`총 ${total.toLocaleString('ko-KR')}원`);
 
-      let total = 0;
-      Array.from(rightTableBody.rows).forEach((rightRow) => {
-        const quantity = parseInt(rightRow.cells[2].querySelector(".qty-input").value);
-        const price = parseInt(rightRow.cells[1].textContent.replace(/,/g, ""));
-        total += price * quantity;
-      });
-      finalTotalElement.textContent = `최종 결제 금액: ${total.toLocaleString()}원`;
+    const textToCopy = lines.join('\n');
+
+    // ✅ 클립보드 복사 (가능하면 navigator, 안되면 fallback)
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(textToCopy)
+        .catch(() => fallbackCopyText(textToCopy));
+    } else {
+      fallbackCopyText(textToCopy);
     }
-  </script>
+  } catch (e) {
+    alert('차트 생성 중 오류가 발생했습니다.');
+    console.error(e);
+  }
+}
+
+// ✅ 구형 브라우저용 복사 fallback
+function fallbackCopyText(text) {
+  const temp = document.createElement('textarea');
+  temp.value = text;
+  temp.style.position = 'fixed';
+  temp.style.left = '-9999px';
+  temp.style.top = '-9999px';
+  document.body.appendChild(temp);
+  temp.focus();
+  temp.select();
+
+  try {
+    document.execCommand('copy');
+    //alert('차트가 복사되었습니다.');
+  } catch (e) {
+    alert('복사 실패 — 수동 복사가 필요합니다.');
+    console.error(e);
+  }
+
+  document.body.removeChild(temp);
+}
+// ✅ 합계+잔액: 최종금액 + 차감 후 잔액만 복사
+function exportTotalWithBalance() {
+  try {
+    // 최종금액
+    const totalEl = document.getElementById('final-total');
+    const total = totalEl
+      ? Number(String(totalEl.textContent || '').replace(/[^\d-]/g, '')) || 0
+      : 0;
+
+    // 차감 후 잔액
+    const balEl = document.getElementById('membership-balance');
+    const balance = balEl
+      ? Number(String(balEl.textContent || '').replace(/[^\d-]/g, '')) || 0
+      : 0;
+
+    const lines = [];
+    lines.push(`총: ${total.toLocaleString('ko-KR')}원`);
+
+    // 잔액 표기 방식은 너가 쓰던 로직 그대로 맞춤
+    if (balance >= 0) {
+      lines.push(`잔액: ${balance.toLocaleString('ko-KR')}원`);
+    } else {
+      const diff = Math.abs(balance);
+      lines.push(`잔액 : 없음, 차액 ${diff.toLocaleString('ko-KR')}원 결제`);
+    }
+
+    const textToCopy = lines.join('\n');
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(textToCopy).catch(() => fallbackCopyText(textToCopy));
+    } else {
+      fallbackCopyText(textToCopy);
+    }
+  } catch (e) {
+    alert('합계+잔액 복사 중 오류가 발생했습니다.');
+    console.error(e);
+  }
+}
+// ✅ 차트+잔액: 차트 텍스트 + 잔액 라인 추가해서 자동 복사
+function exportChartWithBalance() {
+  try {
+    const items = Object.values(cart || {})
+      .filter(it => it && it.checked)
+      .sort((a, b) => String(a.id).localeCompare(String(b.id)));
+
+    if (items.length === 0) {
+      alert('선택된 시술이 없습니다.');
+      return;
+    }
+
+    let total = 0;
+
+    const lines = items.map(item => {
+      const rawName = String(item.name || '').trim();
+      const price = Number(item.totalTaxIncludedPrice || 0);
+      total += price;
+
+      let name = rawName.replace(/(\d+)\s*회/g, (_, n) => `${n}-1`);
+
+      if (!/(\d+)-1/.test(name)) {
+  const qty = Number(item.quantity) || 1;
+  name = `${name} ${qty}-1`;
+}
+
+      name = name.replace(/\s*\+\s*/g, '+');
+      name = name.replace(/([가-힣A-Za-z])(\d+-1)/g, '$1 $2');
+
+      return `${name} ${price.toLocaleString('ko-KR')}원`;
+    });
+
+    lines.push(`총 ${total.toLocaleString('ko-KR')}원`);
+
+    // ✅ 잔액 처리 (membership-balance에서 가져옴)
+    const balEl = document.getElementById('membership-balance');
+    const balance = balEl
+      ? Number(String(balEl.textContent || '').replace(/[^\d-]/g, '')) || 0
+      : 0;
+
+    if (balance >= 0) {
+      lines.push(`잔액: ${balance.toLocaleString('ko-KR')}원`);
+    } else {
+      const diff = Math.abs(balance);
+      lines.push(`잔액 : 없음, 차액 ${diff.toLocaleString('ko-KR')}원 결제`);
+    }
+
+    const textToCopy = lines.join('\n');
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(textToCopy)
+            .catch(() => fallbackCopyText(textToCopy));
+    } else {
+      fallbackCopyText(textToCopy);
+    }
+  } catch (e) {
+    alert('차트+잔액 생성 중 오류가 발생했습니다.');
+    console.error(e);
+  }
+}
+// ✅ 오늘 날짜 YY.MM.DD
+function getTodayYYMMDD() {
+  const d = new Date();
+  const yy = String(d.getFullYear()).slice(-2);
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${yy}.${mm}.${dd}`;
+}
+
+function getSelectedMembershipType() {
+  const el = document.querySelector(
+    '#membership-popup input[type="checkbox"]:checked'
+  );
+  if (!el) return null;
+
+  return String(el.value || '').trim();
+}
+
+
+// ✅ 회원권별 헤더 라인 생성
+function buildMembershipHeaderLines(type) {
+  const today = getTodayYYMMDD();
+
+  const map = {
+    '쁘띠50+10': [`쁘띠50+10(은빈S/${today})`],
+    '쁘띠20+3':  [`쁘띠20+3(은빈S/${today})`],
+
+    'VIP100+10': [
+      `VIP100+10(은빈S/${today})`,
+      '회원권 피부관리 1회 서비스*KEEP'
+    ],
+
+    'VIP200+30': [
+      `VIP200+30(은빈S/${today})`,
+      '회원권 레이저 1회 서비스*KEEP'
+    ],
+
+    'VIP300+60': [
+      `VIP300+60(은빈S/${today})`,
+      '회원권 레이저 2회 서비스*KEEP'
+    ],
+
+    'VIP400+80': [
+      `VIP400+80(은빈S/${today})`,
+      '회원권 레이저 4회 서비스*KEEP'
+    ],
+
+    'VIP500+125': [
+      `VIP500+125(은빈S/${today})`,
+      '회원권 레이저 4회 서비스*KEEP'
+    ],
+
+    'VIP600+150': [
+      `VIP600+150(은빈S/${today})`,
+      '회원권 레이저 5회 서비스*KEEP'
+    ],
+
+    'VIP1000+300': [
+      `VIP1000+300(은빈S/${today})`,
+      '회원권 레이저 4회 서비스+부스터 서비스 *KEEP'
+    ],
+  };
+
+  // 혹시 공백/줄바꿈 섞여 들어오면 정리
+  const key = String(type).replace(/\s+/g, '').trim();
+  return map[key] || [`${key}(은빈S/${today})`]; // ✅ 맵에 없으면 기본 한 줄
+}
+
+// ✅ 회원권+ 팝업의 "차트생성" 버튼용 (차트+잔액과 동일 + 맨 위 회원권 문구)
+function generateChartFromMembershipPopup() {
+  try {
+    const selectedType = getSelectedMembershipType();
+    if (!selectedType) {
+      alert('회원권을 선택해주세요.');
+      return;
+    }
+
+    const headerLines = buildMembershipHeaderLines(selectedType);
+
+    // ===== 아래는 차트+잔액과 동일 로직 =====
+    const items = Object.values(cart || {})
+      .filter(it => it && it.checked)
+      .sort((a, b) => String(a.id).localeCompare(String(b.id)));
+
+    if (items.length === 0) {
+      alert('선택된 시술이 없습니다.');
+      return;
+    }
+
+    let total = 0;
+
+    const lines = items.map(item => {
+      const rawName = String(item.name || '').trim();
+      const price = Number(item.totalTaxIncludedPrice || 0);
+      total += price;
+
+      // "20회" -> "20-1"
+      let name = rawName.replace(/(\d+)\s*회/g, (_, n) => `${n}-1`);
+
+      // 횟수 없으면 무조건 1-1
+      if (!/(\d+)-1/.test(name)) {
+  const qty = Number(item.quantity) || 1;
+  name = `${name} ${qty}-1`;
+}
+
+      // + 주변 공백 제거
+      name = name.replace(/\s*\+\s*/g, '+');
+
+      // 글자와 "3-1" 사이 띄어쓰기 보정
+      name = name.replace(/([가-힣A-Za-z])(\d+-1)/g, '$1 $2');
+
+      return `${name} ${price.toLocaleString('ko-KR')}원`;
+    });
+
+    const out = [];
+    out.push(...headerLines);                        // ✅ 맨 위 회원권 문구
+    out.push(...lines);                              // ✅ 시술 리스트
+    out.push(`총 ${total.toLocaleString('ko-KR')}원`); // ✅ 총액
+
+    // ✅ 잔액 라인 (차트+잔액과 동일)
+    const balEl = document.getElementById('membership-balance');
+    const balance = balEl
+      ? Number(String(balEl.textContent || '').replace(/[^\d-]/g, '')) || 0
+      : 0;
+
+    if (balance >= 0) {
+      out.push(`잔액: ${balance.toLocaleString('ko-KR')}원`);
+    } else {
+      const diff = Math.abs(balance);
+      out.push(`잔액 : 없음, 차액 ${diff.toLocaleString('ko-KR')}원 결제`);
+    }
+
+    const textToCopy = out.join('\n');
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(textToCopy)
+        .catch(() => fallbackCopyText(textToCopy));
+    } else {
+      fallbackCopyText(textToCopy);
+    }
+
+    // (원하면) 팝업 닫기: 기존 닫는 함수가 있으면 여기서 호출 가능
+    // closeMembershipPopup?.();
+
+  } catch (e) {
+    alert('회원권+ 차트 생성 중 오류가 발생했습니다.');
+    console.error(e);
+  }
+}
+function openInfoModal(imgSrc) {
+  document.getElementById('info-modal-img').src = imgSrc;
+  document.getElementById('info-modal').classList.remove('hidden');
+  document.body.classList.add('overflow-hidden');
+}
+
+function closeInfoModal() {
+  document.getElementById('info-modal').classList.add('hidden');
+  document.getElementById('info-modal-img').src = '';
+  document.body.classList.remove('overflow-hidden');
+}
+document.addEventListener("DOMContentLoaded", () => {
+    const allBtn = document.getElementById("all-btn");
+    const modal = document.getElementById("all-modal");
+    const backdrop = document.getElementById("all-modal-backdrop");
+    const content = document.getElementById("all-modal-content");
+
+    function openAllModal() {
+      modal.classList.remove("hidden");
+      document.body.classList.add("overflow-hidden"); // 배경 스크롤 막기
+    }
+
+    function closeAllModal() {
+      modal.classList.add("hidden");
+      document.body.classList.remove("overflow-hidden");
+    }
+
+    // ALL 버튼 클릭하면 열기
+    allBtn?.addEventListener("click", (e) => {
+      e.preventDefault();
+      openAllModal();
+    });
+
+    // 바깥(반투명 영역) 클릭하면 닫기
+    backdrop?.addEventListener("click", closeAllModal);
+
+    // 이미지 영역 클릭은 닫히지 않게(혹시 이벤트 전파 대비)
+    content?.addEventListener("click", (e) => e.stopPropagation());
+
+    // ESC 키로 닫기(선택사항이지만 편함)
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && !modal.classList.contains("hidden")) {
+        closeAllModal();
+      }
+    });
+  });
+
+document.addEventListener("DOMContentLoaded", () => {
+  const vipBtn = document.getElementById("vip-btn");
+  const vipImages = document.getElementById("vip-images");
+  const procedureArea = document.getElementById("procedure-area");
+
+  const leftPanel = vipImages?.closest("section");
+
+  vipBtn?.addEventListener("click", (e) => {
+    e.preventDefault();
+    if (!vipImages || !procedureArea) return;
+
+    const openingVip = vipImages.classList.contains("hidden");
+
+    if (openingVip) {
+      // VIP ON
+      procedureArea.classList.add("hidden");
+      vipImages.classList.remove("hidden");
+      leftPanel?.scrollTo({ top: 0, behavior: "smooth" });
+    } else {
+      // VIP OFF
+      vipImages.classList.add("hidden");
+      procedureArea.classList.remove("hidden");
+      leftPanel?.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  });
+});
+
+(() => {
+  const track = document.getElementById("all-slider-track");
+  const prev = document.getElementById("all-prev");
+  const next = document.getElementById("all-next");
+  const allBtn = document.getElementById("all-btn");
+
+  if (!track || !prev || !next || !allBtn) return;
+
+  const slides = track.children;
+  const total = slides.length;
+  let index = 0;
+
+  function update() {
+    track.style.transform = `translateX(${-index * 100}%)`;
+  }
+
+  prev.addEventListener("click", (e) => {
+    e.stopPropagation();
+    index = (index - 1 + total) % total;
+    update();
+  });
+
+  next.addEventListener("click", (e) => {
+    e.stopPropagation();
+    index = (index + 1) % total;
+    update();
+  });
+
+  // ALL 버튼 다시 누르면 항상 첫 장부터
+  allBtn.addEventListener("click", () => {
+    index = 0;
+    update();
+  });
+})();
+
+document.addEventListener("keydown", (e) => {
+  if (e.key !== "Escape") return;
+
+  const vipImages = document.getElementById("vip-images");
+  const procedureArea = document.getElementById("procedure-area");
+
+  if (!vipImages) return;
+
+  // VIP 이미지가 열려 있을 때만 닫기
+  if (!vipImages.classList.contains("hidden")) {
+    vipImages.classList.add("hidden");
+
+    if (procedureArea) {
+      procedureArea.classList.remove("hidden");
+    }
+  }
+});
+document.addEventListener("keydown", (e) => {
+  if (e.key !== "Escape") return;
+
+  const dropdown = document.getElementById("search-results-dropdown");
+  const searchContainer = document.getElementById("search-container");
+  const searchInput = document.getElementById("search-input");
+
+  // 1) 결과 드롭다운 닫기
+  if (dropdown && !dropdown.classList.contains("hidden")) {
+    dropdown.classList.add("hidden");
+    dropdown.innerHTML = ""; // 원하면 제거 가능
+  }
+
+  // 2) 검색 input 영역도 닫기 (열려있을 때만)
+  if (searchContainer && searchContainer.style.width !== "0px") {
+    searchContainer.style.width = "0px";
+    searchContainer.style.opacity = "0";
+  }
+
+  // 3) 포커스/입력 정리 (원하면 일부 제거 가능)
+  if (searchInput) {
+    searchInput.blur();
+    // searchInput.value = ""; // ESC 시 검색어도 지우고 싶으면 주석 해제
+  }
+});
+
+</script>
+<footer id="site-footer">
+   © 2025. Designed &amp; Developed by EUNBIN GA
+</footer>
 </body>
 </html>
