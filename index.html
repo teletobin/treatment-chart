@@ -1006,7 +1006,8 @@ function handleCartItemCheckChange(procedureId) {
 
 // 카테고리별 우선순위
 // 1. 피부관리 > 2. 이벤트시술 > 3. 리프팅 > 4. 올인원테라피
-// 5. 레이저 > 6. 체형관리 > 7. 주사류(부스터/보톡스/필러/면역주사) > 8. 제모 > 그 외
+// 5. 레이저 > 6. 트러블 > 7. 체형관리
+// 8. 주사류(부스터/보톡스/필러/면역주사) > 9. 제모 > 그 외
 function getCategoryPriority(rawCategory) {
   const cat = String(rawCategory || '').trim().toLowerCase();
 
@@ -1025,19 +1026,21 @@ function getCategoryPriority(rawCategory) {
   // 5순위: 레이저
   if (cat === 'laser') return 5;
 
-  // 6순위: 체형관리
-  if (cat === 'body') return 6;
+  // 6순위: 트러블
+  if (cat === 'trouble') return 6;
 
-  // 7순위: 주사시술 (부스터, 보톡스, 필러, 면역주사)
-  if (['booster', 'botox', 'filler', 'injection'].includes(cat)) return 7;
+  // 7순위: 체형관리
+  if (cat === 'body') return 7;
 
-  // 8순위: 제모 (여성제모 / 남성제모)
-  if (cat === 'femalehair' || cat === 'malehair') return 8;
+  // 8순위: 주사류 (부스터, 보톡스, 필러, 면역주사)
+  if (['booster', 'botox', 'filler', 'injection'].includes(cat)) return 8;
 
-  // 그 외 (트러블 등)
+  // 9순위: 제모 (여성제모 / 남성제모)
+  if (cat === 'femalehair' || cat === 'malehair') return 9;
+
+  // 그 외
   return 99;
 }
-
 // 실제 정렬에 쓰는 함수
 function sortForChart(a, b) {
   const pa = getCategoryPriority(a && a.category);
