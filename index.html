@@ -372,40 +372,47 @@ function enToHangulDubeolsik(input) {
            class="h-12 w-auto pointer-events-auto">
     </div>
 
-    <!-- Search + Icons -->
-    <div class="flex items-center ml-auto space-x-6 text-gray-500">
-      <div id="search-container"
-  class="transition-all duration-300 ease-in-out overflow-hidden"
-  style="width: 0px; max-width: 120px; opacity: 0;"
+   <!-- Search + Icons -->
+<div class="flex items-center ml-auto space-x-4 text-gray-500">
+
+  <!-- 하트 버튼 -->
+  <button
+  id="wishlist-toggle-btn"
+  aria-label="Wishlist"
+  onclick="toggleWishlistView()"
+  class="p-1 hover:text-[#F68F9D] transition
+         focus:outline-none active:outline-none active:scale-100"
 >
-        <input
-          type="text"
-          id="search-input"
-          oninput="handleSearchInput()"
-          placeholder="시술명"
-          class="
-            w-[120px]
-            bg-transparent
-            border-0
-            border-b
-            border-gray-300
-            text-sm
-            text-gray-700
-            placeholder-gray-400
-            focus:outline-none
-            focus:border-[#F68F9D]
-            transition
-          "
-        >
+    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-heart"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+  </button>
+
+  <!-- 🔍 + 검색창 묶음 -->
+  <div class="flex items-center space-x-2">
+    
+    <button
+  id="search-toggle-btn"
+  aria-label="Search"
+  onclick="toggleSearchInput()"
+  class="p-1 hover:text-[#F68F9D] transition
+         focus:outline-none active:outline-none active:scale-100"
+>
+
+      <svg xmlns="http://www.w3.org/2000/svg" width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-search"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+    </button>
+
+    <div id="search-container"
+      class="transition-all duration-300 ease-in-out overflow-hidden relative z-30"
+      style="width: 0px; max-width: 120px; opacity: 0;"
+    >
+      <input
+        type="text"
+        id="search-input"
+        oninput="handleSearchInput()"
+        placeholder="시술명"
+        class="w-[90px] sm:w-[120px] bg-transparent border-0 border-b border-gray-300 text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:border-[#F68F9D] transition"
+
+      >
       </div>
-
-      <button id="search-toggle-btn" aria-label="Search" class="hover:text-[#F68F9D] transition" onclick="toggleSearchInput()">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-search"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-      </button>
-
-      <button id="wishlist-toggle-btn" aria-label="Wishlist" class="hover:text-[#F68F9D] transition" onclick="toggleWishlistView()">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-heart"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
-      </button>
     </div>
 
     <div id="search-results-dropdown" class="absolute top-full right-4 mt-2 w-96 bg-white border border-gray-200 rounded-lg shadow-xl max-h-60 overflow-y-auto hidden z-20"></div>
@@ -759,6 +766,7 @@ function enToHangulDubeolsik(input) {
         let currentCategory = 'event';
         let currentCategoryName = '한정 이벤트';
         let isSearchVisible = false;
+        let isFinalDiscountApplied = false;   // 최종금액 5% 할인 여부
 
         // DOM 요소 가져오기
         const procedureList = document.getElementById('procedure-list');
@@ -768,13 +776,41 @@ function enToHangulDubeolsik(input) {
         const emptyCartMessage = document.getElementById('empty-cart-message');
         const wishlistToggleButton = document.getElementById('wishlist-toggle-btn');
         const finalTotalContainer = document.getElementById('final-total-container');
+        // 🔥 최종금액 박스 우클릭 → 5% 할인 토글
+finalTotalContainer.addEventListener('contextmenu', e => {
+  e.preventDefault();  // 기본 우클릭 메뉴 막기
+  isFinalDiscountApplied = !isFinalDiscountApplied; // true <-> false 토글
+  updateCart(); // 화면 다시 계산
+});
         const menuTabs = document.querySelectorAll('.menu-tab');
         const searchContainer = document.getElementById('search-container');
         const searchInput = document.getElementById('search-input');
         const searchResultsDropdown = document.getElementById('search-results-dropdown');
 
         const calculateTotalTaxIncludedPrice = (price, quantity) => Math.floor(price * quantity * 1.1);
-        
+        // ✅ 우측 시술목록 합계 칸 우클릭 시 -5% 할인 토글
+cartList.addEventListener('contextmenu', function (e) {
+  const amountCell = e.target.closest('.cart-item-amount');
+  if (!amountCell) return;
+
+  e.preventDefault();
+
+  const id = amountCell.dataset.id;
+  const item = cart[id];
+  if (!item) return;
+
+  if (!item.discount5Applied) {
+    item.discount5Applied = true;
+    item.originalTotalForDiscount = item.totalTaxIncludedPrice;
+    item.totalTaxIncludedPrice = Math.floor(item.totalTaxIncludedPrice * 0.95);
+  } else {
+    item.totalTaxIncludedPrice = item.originalTotalForDiscount;
+    delete item.originalTotalForDiscount;
+    item.discount5Applied = false;
+  }
+
+  updateCart();
+});
 
         function setCategoryFilter(category, categoryName) {
             if (isWishlistView) {
@@ -1087,34 +1123,55 @@ function updateCart() {
 
             const styleClass = item.checked ? 'text-gray-800' : 'text-gray-400';
 
-            return `
-                <div class="grid grid-cols-12 items-center text-xs py-2 border-b border-gray-100">
-                    <div class="col-span-1 flex justify-center items-center gap-1">
-  ${renderVisualCartCheckbox(item.id, item.checked)}
+           return `
+  <div class="grid grid-cols-12 items-center text-xs py-2 border-b border-gray-100">
+    <!-- 1. 체크박스 + 삭제버튼 -->
+    <div class="col-span-1 flex justify-center items-center gap-1">
+      ${renderVisualCartCheckbox(item.id, item.checked)}
 
-  <button
-    onclick="removeCartItem('${item.id}')"
-    class="w-3 h-3 rounded-full border border-#F68F9D
-           text-[#F68F9D] text-xs font-bold
-           flex items-center justify-center
-           hover:bg-pink-100 transition"
-    title="삭제"
-  >
-    −
-  </button>
-</div>
+      <button
+        onclick="removeCartItem('${item.id}')"
+        class="w-3 h-3 rounded-full border border-[#F68F9D]
+               text-[#F68F9D] text-xs font-bold
+               flex items-center justify-center
+               hover:bg-pink-100 transition"
+        title="삭제"
+      >
+        −
+      </button>
+    </div>
 
-                    <div class="col-span-8 text-left pl-1 pr-1 cart-item-name ${styleClass}">${item.name}</div>
-                    <div class="col-span-1 text-right text-gray-600 ${styleClass}">${formatPrice(item.price)}</div>
-                    <div class="col-span-1 text-center ${styleClass}">${item.quantity}</div>
-                    <div class="col-span-1 text-right text-gray-700 pr-3 ${styleClass}">${formatPrice(item.totalTaxIncludedPrice)}</div>
-                </div>
-            `;
+    <!-- 2. 시술명 -->
+    <div class="col-span-8 text-left pl-1 pr-1 cart-item-name ${styleClass}">
+      ${item.name}
+    </div>
+
+    <!-- 3. 가격 -->
+    <div class="col-span-1 text-right text-gray-600 ${styleClass}">
+      ${formatPrice(item.price)}
+    </div>
+
+    <!-- 4. 횟수 -->
+    <div class="col-span-1 text-center ${styleClass}">
+      ${item.quantity}
+    </div>
+
+    <!-- 5. 합계 (우클릭 할인 대상) -->
+    <div
+      class="col-span-1 text-right text-gray-700 pr-3 ${styleClass} cart-item-amount"
+      data-id="${item.id}"
+    >
+      ${formatPrice(item.totalTaxIncludedPrice)}
+    </div>
+  </div>
+`;
         }).join('');
     }
 
-    finalTotalDisplay.textContent = formatPrice(totalAmount);
-    updateMembershipBalance();
+   finalTotalDisplay.textContent = formatPrice(
+  isFinalDiscountApplied ? Math.floor(totalAmount * 0.95) : totalAmount
+);
+updateMembershipBalance();
 }
 
 
@@ -1149,10 +1206,12 @@ function updateCart() {
             isSearchVisible = !isSearchVisible;
             
             if (isSearchVisible) {
-                searchContainer.style.width = '160px';
-                searchContainer.style.opacity = '1';
-                searchInput.focus();
-            } else {
+    const isMobile = window.innerWidth < 640;
+
+    searchContainer.style.width = isMobile ? '100px' : '160px';
+    searchContainer.style.opacity = '1';
+    searchInput.focus();
+} else {
                 searchContainer.style.width = '0px';
                 searchContainer.style.opacity = '0';
                 searchInput.value = '';
