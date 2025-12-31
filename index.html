@@ -632,6 +632,7 @@ function enToHangulDubeolsik(input) {
         class="w-[72px] h-[22px] flex items-center justify-center rounded-full text-[11px] font-medium bg-white text-[#F68F9D] border border-[#F68F9D] hover:bg-[#F7E4E8] transition whitespace-nowrap">
         회원권+
       </button>
+      
 
       <div class="text-right font-bold text-[#F66C82] final-emphasis">차감 후 잔액</div>
       <div id="membership-balance" class="text-right font-bold text-[#F66C82] final-emphasis">0</div>
@@ -639,7 +640,22 @@ function enToHangulDubeolsik(input) {
     </div>
   </div>
 </div>
-
+<!-- 할인 버튼 (최종금액 박스 바깥, 아주 작게) -->
+<div class="flex justify-start mt-1 pr-3">
+  <button
+    type="button"
+    id="btn-discount"
+    onclick="toggleDiscountText()"
+    class="px-2 h-[18px] rounded text-[10px] text-[11px] font-medium bg-white text-[#F6B7C6] hover:bg-[#F7E4E8] transition whitespace-nowrap">
+    할인
+  </button>
+   <div
+    id="discount-text"
+    class="hidden mt-3 text-[11px] leading-7
+           text-[#363333] whitespace-pre-line">
+  </div>
+</div>
+</div>
 
 
 </div>
@@ -2071,6 +2087,35 @@ document.addEventListener("keydown", (e) => {
     // searchInput.value = ""; // ESC 시 검색어도 지우고 싶으면 주석 해제
   }
 });
+function parseKrwNumber(text) {
+  if (text == null) return 0;
+  return Number(String(text).replace(/[^\d]/g, "")) || 0;
+}
+
+function formatKrw(n) {
+  return Math.round(n).toLocaleString("ko-KR") + "원";
+}
+
+function toggleDiscountText() {
+  const box = document.getElementById('discount-text');
+  const finalEl = document.getElementById('final-total');
+  if (!box || !finalEl) return;
+
+  // 이미 열려 있으면 닫기
+  if (!box.classList.contains('hidden')) {
+    box.classList.add('hidden');
+    return;
+  }
+
+  const base = parseKrwNumber(finalEl.textContent);
+
+  const line1 = `→ 2인동반 5%  ${formatKrw(base * 0.95)} (★TAX FREE)`;
+  const line2 = `→ 3인동반 10%  ${formatKrw(base * 0.90)}(★TAX FREE)`;
+  const line3 = `→ 지인할인 5%  ${formatKrw(base * 0.95)}`;
+
+  box.textContent = [line1, line2, line3].join("\n");
+  box.classList.remove('hidden');
+}
 
 </script>
 <footer id="site-footer">
