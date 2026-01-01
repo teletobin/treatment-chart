@@ -563,13 +563,37 @@ function enToHangulDubeolsik(input) {
                     <div class="flex justify-between items-center mb-2">
   <h2 class="text-xm font-bold text-gray-800 pb-1 border-[#F68F9D] w-fit">시술목록</h2>
 
-  <button
-    onclick="clearCart()"
-    class="clear-btn text-[#F68F9D] font-semibold px-3 py-1 rounded-full
-         hover:text-[#F68F9D] hover:bg-[#F7E4E8] transition"
-  >
-    CLEAR
-  </button>
+  <div class="flex items-center gap-1">
+      <!-- 🌍 지구본 아이콘 + 언어 선택 메뉴 -->
+      <div class="relative">
+          <button 
+            id="btn-lang-toggle"
+            onclick="toggleLanguageMenu()"
+            class="text-[#F68F9D] p-1 rounded-full hover:bg-[#F7E4E8] transition flex items-center justify-center relative z-10" 
+            aria-label="Global"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-globe"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
+          </button>
+          
+          <!-- 언어 선택 팝업 (아이콘 위쪽) -->
+          <div id="language-menu" class="hidden absolute bottom-full left-1/2 -translate-x-1/2 mb-0 bg-white border border-[#F68F9D] rounded-md shadow-lg overflow-hidden flex flex-row z-20">
+
+              <button onclick="selectLanguage('KR')"
+          class="px-2 py-0.5 text-[9px] font-bold text-gray-600 hover:bg-[#F7E4E8] hover:text-[#F68F9D] transition text-center">KR</button>  
+            <button onclick="selectLanguage('EN')" class="px-2 py-0.5 text-[9px] font-bold text-gray-600 hover:bg-[#F7E4E8] hover:text-[#F68F9D] transition text-center">EN</button>
+              <button onclick="selectLanguage('JP')" class="px-2 py-0.5 text-[9px] font-bold text-gray-600 hover:bg-[#F7E4E8] hover:text-[#F68F9D] transition text-center border-t border-pink-100">JP</button>
+              <button onclick="selectLanguage('CN')" class="px-2 py-0.5 text-[9px] font-bold text-gray-600 hover:bg-[#F7E4E8] hover:text-[#F68F9D] transition text-center border-t border-pink-100">CN</button>
+          </div>
+      </div>
+
+      <button
+        onclick="clearCart()"
+        class="clear-btn text-[#F68F9D] font-semibold px-3 py-1 rounded-full
+             hover:text-[#F68F9D] hover:bg-[#F7E4E8] transition"
+      >
+        CLEAR
+      </button>
+  </div>
 </div>
                     <!-- Cart Table -->
                     <div class="w-full">
@@ -738,6 +762,10 @@ function enToHangulDubeolsik(input) {
       category: headers.indexOf("category"),
       active: headers.indexOf("active"),
       memo: headers.indexOf("memo"),
+        // ✅ 번역 컬럼 인덱스 추가
+  name_en: headers.indexOf("name_en"),
+  name_jp: headers.indexOf("name_jp"),
+  name_cn: headers.indexOf("name_cn"),
     };
 
     // 필수 컬럼 체크
@@ -751,10 +779,15 @@ function enToHangulDubeolsik(input) {
 
       const id = String(line[idx.id] ?? "").trim();
       const name = String(line[idx.name] ?? "").trim();
+      const name_en = idx.name_en >= 0 ? String(line[idx.name_en] ?? "").trim() : "";
+      const name_jp = idx.name_jp >= 0 ? String(line[idx.name_jp] ?? "").trim() : "";
+      const name_cn = idx.name_cn >= 0 ? String(line[idx.name_cn] ?? "").trim() : "";
       const category = String(line[idx.category] ?? "").trim();
       const priceRaw = String(line[idx.price] ?? "").replace(/[^\d]/g, "");
       const price = Number(priceRaw);
       const memo = idx.memo >= 0 ? String(line[idx.memo] ?? "").trim() : "";
+
+       
 
       // active: TRUE/true/1/y/yes 정도만 활성로 인정 (없으면 기본 true)
       let isActive = true;
@@ -767,12 +800,59 @@ function enToHangulDubeolsik(input) {
       if (!Number.isFinite(price)) continue;
       if (!isActive) continue; // ✅ active가 꺼져있으면 제외
 
-      items.push({ id, name, price, category, memo });
+      items.push({ id, name, price, category, memo, name_en, name_jp, name_cn, });
     }
 
     allProceduresData = items;
     console.log("✅ 시트 데이터 로딩 완료:", allProceduresData.length);
   }
+
+  // ✅ 언어 메뉴 토글 함수
+  function toggleLanguageMenu() {
+    const menu = document.getElementById('language-menu');
+    if (menu) menu.classList.toggle('hidden');
+  }
+
+  function selectLanguage(langCode) {
+  currentLanguage = langCode;   // 'EN' / 'JP' / 'CN'
+
+  // 메뉴 닫기
+  const menu = document.getElementById('language-menu');
+  if (menu) menu.classList.add('hidden');
+
+  // 🟣 시술 목록 다시 그리기
+  updateCart();
+}
+
+  // ✅ 화면 다른 곳 클릭 시 언어 메뉴 닫기
+  document.addEventListener('click', (e) => {
+    const menu = document.getElementById('language-menu');
+    const btn = document.getElementById('btn-lang-toggle');
+    if (!menu || !btn) return;
+    
+    // 메뉴가 열려있고, 버튼이나 메뉴 내부를 클릭한 게 아니라면 닫기
+    if (!menu.classList.contains('hidden')) {
+      if (!menu.contains(e.target) && !btn.contains(e.target)) {
+        menu.classList.add('hidden');
+      }
+    }
+  });
+function getTranslatedName(item) {
+  if (!item) return "";
+
+  switch (currentLanguage) {
+    case "KR":
+      return item.name;      // 한국어
+    case "EN":
+      return item.name_en || item.name;
+    case "JP":
+      return item.name_jp || item.name;
+    case "CN":
+      return item.name_cn || item.name;
+    default:
+      return item.name;   // 기본 한국어
+  }
+}
 
   
         // 전역 상태 변수
@@ -783,6 +863,8 @@ function enToHangulDubeolsik(input) {
         let currentCategoryName = '한정 이벤트';
         let isSearchVisible = false;
         let isFinalDiscountApplied = false;   // 최종금액 5% 할인 여부
+        let currentLanguage = 'KO';  // 기본: 한국어
+
 
         // DOM 요소 가져오기
         const procedureList = document.getElementById('procedure-list');
@@ -1009,6 +1091,9 @@ function handleCartCheckboxChange(procedureId) {
             name: proc.name,
             price: proc.price,
             category: proc.category,
+             name_en: proc.name_en,
+    name_jp: proc.name_jp,
+    name_cn: proc.name_cn,
             quantity: currentQuantity,
             totalTaxIncludedPrice: calculateTotalTaxIncludedPrice(proc.price, currentQuantity),
             checked: true
@@ -1159,7 +1244,7 @@ function updateCart() {
 
     <!-- 2. 시술명 -->
     <div class="col-span-8 text-left pl-1 pr-1 cart-item-name ${styleClass}">
-      ${item.name}
+      ${getTranslatedName(item)}
     </div>
 
     <!-- 3. 가격 -->
