@@ -2194,11 +2194,47 @@ function toggleDiscountText() {
 
   const base = parseKrwNumber(finalEl.textContent);
 
-  const line1 = `→ 2인동반 5%  ${formatKrw(base * 0.95)}`;
-  const line2 = `→ 3인동반 10%  ${formatKrw(base * 0.90)}`;
-  const line3 = `→ 지인할인 5%  ${formatKrw(base * 0.95)}`;
+  // ✅ line1/2/3 대신 이거 추가
+  const discounts = [
+    { label: '2인동반 5%', val: base * 0.95 },
+    { label: '3인동반 10%', val: base * 0.90 },
+    { label: '지인할인 5%', val: base * 0.95 },
+  ];
 
-  box.textContent = [line1, line2, line3].join("\n");
+  // ✅ 기존 내용 지우기
+  box.innerHTML = '';
+
+  discounts.forEach(item => {
+    const fullText = `→ ${item.label} ${formatKrw(item.val)}`;
+
+    const row = document.createElement('div');
+    row.className = 'flex items-center justify-between mb-1';
+
+    const txt = document.createElement('span');
+    txt.textContent = fullText;
+
+    const cpBtn = document.createElement('button');
+    cpBtn.type = 'button';
+    cpBtn.textContent = 'copy';
+    cpBtn.className =
+      'ml-2 px-1 text-[9px] text-gray-400 border border-gray-200 rounded ' +
+      'h-[14px] leading-none hover:text-[#F6B7C6]';
+
+    cpBtn.onclick = () => {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(fullText)
+          .catch(() => fallbackCopyText(fullText));
+      } else {
+        fallbackCopyText(fullText);
+      }
+    };
+
+    row.appendChild(txt);
+    row.appendChild(cpBtn);
+    box.appendChild(row);
+  });
+
+  // ✅ 이거 있어야 화면에 보임
   box.classList.remove('hidden');
 }
 
