@@ -1047,32 +1047,6 @@ window.setCategoryFilter = setCategoryFilter;
             }
         }
 
-      function toggleCartFromSearch(procedureId) {
-    const proc = allProceduresData.find(p => p.id === procedureId);
-    if (!proc) return;
-
-    // 이미 담겼으면 제거, 아니면 추가(수량은 화면에 있으면 그 값, 없으면 1)
-    if (cart[procedureId]) {
-        delete cart[procedureId];
-        updateCart();
-        return;
-    }
-
-    const quantityInput = document.getElementById(`quantity-${procedureId}`);
-    const currentQuantity = quantityInput ? parseInt(quantityInput.value, 10) : 1;
-
-    cart[procedureId] = {
-        id: proc.id,
-        name: proc.name,
-        price: proc.price,
-        category: proc.category,
-        quantity: currentQuantity || 1,
-        totalTaxIncludedPrice: calculateTotalTaxIncludedPrice(proc.price, currentQuantity || 1),
-        checked: true
-    };
-
-    updateCart();
-}
 
 function handleCartCheckboxChange(procedureId) {
     const checkbox = document.getElementById(`check-${procedureId}`);
@@ -1412,13 +1386,18 @@ function toggleCartFromSearch(procedureId) {
   if (!proc) return;
 
   if (cart[procedureId]) {
+    // 이미 담겨 있으면 제거
     delete cart[procedureId];
   } else {
-    // 검색창에서 체크할 때도 기본 수량은 1로
+    // ✅ 검색으로 담을 때도 번역 필드까지 그대로 복사
     cart[procedureId] = {
       id: proc.id,
       name: proc.name,
+      name_en: proc.name_en,   // 추가
+      name_jp: proc.name_jp,   // 추가
+      name_cn: proc.name_cn,   // 추가
       price: proc.price,
+      category: proc.category,
       quantity: 1,
       totalTaxIncludedPrice: calculateTotalTaxIncludedPrice(proc.price, 1),
       checked: true,
@@ -1428,6 +1407,7 @@ function toggleCartFromSearch(procedureId) {
   updateCart();
   renderProcedureList();
 }
+
 
 function selectSearchResult(category, procedureId) {
   toggleSearchInput();
