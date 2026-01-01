@@ -2109,8 +2109,8 @@ function toggleDiscountText() {
 
   const base = parseKrwNumber(finalEl.textContent);
 
-  const line1 = `→ 2인동반 5%  ${formatKrw(base * 0.95)} (★TAX FREE)`;
-  const line2 = `→ 3인동반 10%  ${formatKrw(base * 0.90)}(★TAX FREE)`;
+  const line1 = `→ 2인동반 5%  ${formatKrw(base * 0.95)}`;
+  const line2 = `→ 3인동반 10%  ${formatKrw(base * 0.90)}`;
   const line3 = `→ 지인할인 5%  ${formatKrw(base * 0.95)}`;
 
   box.textContent = [line1, line2, line3].join("\n");
