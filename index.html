@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>velyB - 시술 가격 및 자동 차트</title>
+    <title>블리비 홍대점 ｜ 자동차팅</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Inter Font (Default Font) -->
@@ -665,19 +665,25 @@ function enToHangulDubeolsik(input) {
   </div>
 </div>
 <!-- 할인 버튼 (최종금액 박스 바깥, 아주 작게) -->
-<div class="flex justify-start mt-1 pr-3">
-  <button
-    type="button"
-    id="btn-discount"
-    onclick="toggleDiscountText()"
-    class="px-2 h-[18px] rounded text-[10px] text-[11px] font-medium bg-white text-[#F6B7C6] hover:bg-[#F7E4E8] transition whitespace-nowrap">
-    OFF
-  </button>
-   <div
-    id="discount-text"
-    class="hidden mt-3 text-[11px] leading-7
-           text-[#363333] whitespace-pre-line">
+<div class="flex justify-between items-start mt-2 px-1">
+  <div class="flex flex-col">
+    <button
+      type="button"
+      id="btn-discount"
+      onclick="toggleDiscountText()"
+      class="self-start px-2 h-[18px] rounded text-[10px] text-[11px] font-medium bg-white text-[#F6B7C6] hover:bg-[#F7E4E8] transition whitespace-nowrap">
+      OFF
+    </button>
+    <div
+      id="discount-text"
+      class="hidden mt-1 text-[11px] leading-7
+             text-[#363333] whitespace-pre-line">
+    </div>
   </div>
+  <span class="text-[11px] text-gray-700 font-light mt-0.5">&copy; 2025. Designed & Developed by EUNBIN GA</span>
+</div>
+
+
 </div>
 </div>
 
@@ -2219,9 +2225,7 @@ function toggleDiscountText() {
 }
 
 </script>
-<footer id="site-footer">
-   © 2025. Designed &amp; Developed by EUNBIN GA
-</footer>
+
 </body>
 
 </html>
