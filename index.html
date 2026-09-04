@@ -1935,6 +1935,9 @@
 
       lines.push(`총 ${total.toLocaleString('ko-KR')}원`);
 
+      const transferLine1 = getTransferLine();
+      if (transferLine1) lines.push(transferLine1);
+
       const textToCopy = lines.join('\n');
 
       if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -1947,6 +1950,22 @@
       alert('차트 생성 중 오류가 발생했습니다.');
       console.error(e);
     }
+  }
+
+  // ── 양도 내역 한 줄 생성 (양도 영역이 열려있고 이름/금액이 모두 입력된 경우에만)
+  function getTransferLine() {
+    const transferRow = document.getElementById('transfer-row');
+    if (!transferRow || transferRow.classList.contains('hidden')) return null;
+
+    const nameEl = document.getElementById('transfer-name');
+    const amtEl = document.getElementById('transfer-amount');
+
+    const name = nameEl ? nameEl.value.trim() : '';
+    const amt = amtEl ? (Number(String(amtEl.value || '').replace(/\D/g, '')) || 0) : 0;
+
+    if (!name || amt <= 0) return null;
+
+    return `+${name}님께 ${amt.toLocaleString('ko-KR')}원 양도함`;
   }
 
   function fallbackCopyText(text) {
@@ -1983,6 +2002,9 @@
 
       const lines = [];
       lines.push(`총: ${total.toLocaleString('ko-KR')}원`);
+
+      const transferLine2 = getTransferLine();
+      if (transferLine2) lines.push(transferLine2);
 
       if (balance >= 0) {
         lines.push(`잔액: ${balance.toLocaleString('ko-KR')}원`);
@@ -2036,6 +2058,9 @@
       });
 
       lines.push(`총 ${total.toLocaleString('ko-KR')}원`);
+
+      const transferLine3 = getTransferLine();
+      if (transferLine3) lines.push(transferLine3);
 
       const balEl = document.getElementById('membership-balance');
       const balance = balEl
@@ -2139,6 +2164,9 @@
       out.push(...headerLines);                        
       out.push(...lines);                              
       out.push(`총 ${total.toLocaleString('ko-KR')}원`); 
+
+      const transferLine4 = getTransferLine();
+      if (transferLine4) out.push(transferLine4);
 
       const balEl = document.getElementById('membership-balance');
       const balance = balEl
