@@ -506,6 +506,15 @@
                     <div class="flex justify-between items-center mb-2">
                         <h2 class="text-xm font-bold text-gray-800 pb-1 border-[#F68F9D] w-fit">시술목록</h2>
                         <div class="flex items-center gap-1">
+                            <button
+                              type="button"
+                              onclick="toggleCustomItemForm()"
+                              class="flex items-center gap-1 text-[#F68F9D] text-xs font-semibold hover:text-[#F66C82] transition whitespace-nowrap"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+                              직접추가
+                            </button>
+
                             <!-- 🌍 지구본 아이콘 + 언어 선택 메뉴 -->
                             <div class="relative">
                                 <button 
@@ -532,6 +541,25 @@
                               CLEAR
                             </button>
                         </div>
+                    </div>
+
+                    <!-- 직접추가 입력 폼 (숨김 → 토글) -->
+                    <div id="custom-item-form" class="hidden mb-2 flex items-center gap-2 pb-2 border-b border-[#F68F9D]/30">
+                      <input type="text" id="custom-item-name" placeholder="시술명"
+                        class="flex-1 min-w-0 bg-transparent border-0 border-b border-gray-300 text-xs text-gray-700 placeholder-gray-400 focus:outline-none focus:border-[#F68F9D] py-1 transition"
+                        onkeydown="handleCustomItemEnter(event)" />
+                      <input type="text" inputmode="numeric" id="custom-item-price" placeholder="세후 금액"
+                        class="w-[9ch] text-right bg-transparent border-0 border-b border-gray-300 text-xs text-gray-700 placeholder-gray-400 focus:outline-none focus:border-[#F68F9D] py-1 transition"
+                        oninput="formatCustomItemPriceInput()" onkeydown="handleCustomItemEnter(event)" />
+                      <span class="text-xs text-gray-400 shrink-0">원</span>
+                      <button type="button" onclick="addCustomItem()"
+                        class="text-[#F68F9D] text-xs font-semibold hover:text-[#F66C82] transition shrink-0">
+                        추가
+                      </button>
+                      <button type="button" onclick="cancelCustomItem()"
+                        class="text-gray-400 text-xs hover:text-gray-600 transition shrink-0">
+                        취소
+                      </button>
                     </div>
 
                     <!-- Cart Table -->
@@ -1079,6 +1107,7 @@
     if (cat === 'body') return 7;
     if (['booster', 'botox', 'filler', 'injection'].includes(cat)) return 8;
     if (cat === 'femalehair' || cat === 'malehair') return 9;
+    if (cat === 'custom') return 10;
     return 99;
   }
 
@@ -1542,9 +1571,104 @@
     const transferRow = document.getElementById('transfer-row');
     if (transferRow) transferRow.classList.add('hidden');
 
+    const customForm = document.getElementById('custom-item-form');
+    if (customForm) customForm.classList.add('hidden');
+    const customNameInput = document.getElementById('custom-item-name');
+    if (customNameInput) customNameInput.value = '';
+    const customPriceInput = document.getElementById('custom-item-price');
+    if (customPriceInput) customPriceInput.value = '';
+
     updateMembershipBalance();
   }
   window.clearCart = clearCart;
+
+  // ── 직접추가(목록에 없는 시술) 관련 함수 ──────────────────
+
+  function toggleCustomItemForm() {
+    const form = document.getElementById('custom-item-form');
+    if (!form) return;
+
+    const isHidden = form.classList.contains('hidden');
+    form.classList.toggle('hidden');
+
+    if (isHidden) {
+      document.getElementById('custom-item-name')?.focus();
+    } else {
+      cancelCustomItem();
+    }
+  }
+  window.toggleCustomItemForm = toggleCustomItemForm;
+
+  function cancelCustomItem() {
+    const nameInput = document.getElementById('custom-item-name');
+    const priceInput = document.getElementById('custom-item-price');
+    if (nameInput) nameInput.value = '';
+    if (priceInput) priceInput.value = '';
+
+    const form = document.getElementById('custom-item-form');
+    if (form) form.classList.add('hidden');
+  }
+  window.cancelCustomItem = cancelCustomItem;
+
+  function formatCustomItemPriceInput() {
+    const input = document.getElementById('custom-item-price');
+    if (!input) return;
+
+    const digits = input.value.replace(/\D/g, '');
+    input.value = digits ? Number(digits).toLocaleString('ko-KR') : '';
+  }
+  window.formatCustomItemPriceInput = formatCustomItemPriceInput;
+
+  function handleCustomItemEnter(e) {
+    if (e.key !== 'Enter') return;
+    e.preventDefault();
+    addCustomItem();
+  }
+  window.handleCustomItemEnter = handleCustomItemEnter;
+
+  function addCustomItem() {
+    const nameInput = document.getElementById('custom-item-name');
+    const priceInput = document.getElementById('custom-item-price');
+    if (!nameInput || !priceInput) return;
+
+    const name = nameInput.value.trim();
+    const price = Number(String(priceInput.value || '').replace(/\D/g, '')) || 0;
+
+    if (!name) {
+      alert('시술명을 입력해주세요.');
+      nameInput.focus();
+      return;
+    }
+    if (price <= 0) {
+      alert('금액을 입력해주세요.');
+      priceInput.focus();
+      return;
+    }
+
+    const id = `custom-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+
+    cart[id] = {
+      id,
+      name,
+      name_en: name,
+      name_jp: name,
+      name_cn: name,
+      price,
+      category: 'custom',
+      quantity: 1,
+      totalTaxIncludedPrice: price,
+      checked: true,
+      isCustom: true,
+    };
+
+    nameInput.value = '';
+    priceInput.value = '';
+    const form = document.getElementById('custom-item-form');
+    if (form) form.classList.add('hidden');
+
+    updateCart();
+  }
+  window.addCustomItem = addCustomItem;
 
   window.formatPrice = function (value) {
     const num = parseInt(String(value || '').replace(/[^\d]/g, ''), 10) || 0;
